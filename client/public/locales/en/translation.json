@@ -66,6 +66,7 @@
       "title": "Delete Comment"
     },
     "confirm": "Are you sure you want to delete?",
+    "failed$message": "Failed to delete: {{message}}",
     "success": "Deleted successfully",
     "title": "Delete"
   },
@@ -76,7 +77,10 @@
   "error": {
     "api_url": "API_URL in Pages environment variables should be the Worker address. Please check if API_URL in Pages environment variables is correct.",
     "api_url_slash": "API_URL in Pages environment variables should be the Worker address. Please check if API_URL in Pages environment variables is correct and ensure API_URL does not end with a slash (/).",
-    "github_callback": "GitHub OAuth callback URL should be `https://<Worker address>/user/github/callback`. Please check if the GitHub OAuth callback URL is correct."
+    "github_callback": "GitHub OAuth callback URL should be `https://<Worker address>/user/github/callback`. Please check if the GitHub OAuth callback URL is correct.",
+    "not_found": "Page not found",
+    "permission_denied": "Permission denied",
+    "title": "Error"
   },
   "feed_card": {
     "published$time": "Published at {{time}}",
@@ -108,6 +112,7 @@
     "title": "Index"
   },
   "listed": "Listed in articles",
+  "load_more": "Load More",
   "login": {
     "oauth_only": "Please log in to continue",
     "password": {
@@ -121,16 +126,25 @@
   },
   "logout": "Logout",
   "main_content": "Main content",
+  "moments": {
+    "edit": "Edit Moment",
+    "publish": "Publish Moment",
+    "title": "Moments",
+    "total$count_one": "{{count}} moment in total",
+    "total$count_other": "{{count}} moments in total"
+  },
   "next": "Next Page",
   "no_more": "No More",
   "preview": "Preview",
   "previous": "Previous Page",
   "publish": {
+    "failed$message": "Failed to publish: {{message}}",
     "success": "Publish successful",
     "title": "Publish"
   },
   "reload": "Retry",
   "save": "Save",
+  "saving": "Saving",
   "settings": {
     "cache": {
       "clear": {
@@ -157,7 +171,11 @@
     },
     "favicon": {
       "desc": "Set the icon (Favicon) displayed in the browser's address bar",
-      "title": "Favicon"
+      "title": "Favicon",
+      "update": {
+        "failed$message": "Favicon update failed, {{message}}",
+        "success": "Favicon update was successful"
+      }
     },
     "footer": {
       "desc": "Set the footer content of the site (HTML)",
@@ -205,6 +223,7 @@
     }
   },
   "sitename": "Site Name",
+  "sort_order": "Sort Order",
   "status": "Status",
   "summary": "Summary",
   "tags": "Tags",
@@ -219,6 +238,7 @@
     "title": "Untop"
   },
   "update": {
+    "failed$message": "Update failed: {{message}}",
     "success": "Update successful",
     "title": "Update"
   },

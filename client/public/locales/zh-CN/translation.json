@@ -66,6 +66,7 @@
       "title": "删除评论"
     },
     "confirm": "确定要删除吗？",
+    "failed$message": "删除失败: {{message}}",
     "success": "删除成功",
     "title": "删除"
   },
@@ -76,7 +77,10 @@
   "error": {
     "api_url": "Pages 环境变量中 API_URL 应为 Worker 地址，请检查 Pages 环境变量中 API_URL 是否正确",
     "api_url_slash": "Pages 环境变量中 API_URL 应为 Worker 地址，请检查 Pages 环境变量中 API_URL 是否正确，且 API_URL 末尾不能有 /",
-    "github_callback": "GitHub OAuth 回调地址应为 `https://<Worker 地址>/user/github/callback，请检查 GitHub OAuth 回调地址是否正确"
+    "github_callback": "GitHub OAuth 回调地址应为 `https://<Worker 地址>/user/github/callback，请检查 GitHub OAuth 回调地址是否正确",
+    "not_found": "页面未找到",
+    "permission_denied": "权限不足",
+    "title": "错误"
   },
   "feed_card": {
     "published$time": "{{time}} 发布",
@@ -108,6 +112,7 @@
     "title": "目录"
   },
   "listed": "列出在文章中",
+  "load_more": "加载更多",
   "login": {
     "oauth_only": "请登录后继续",
     "password": {
@@ -121,16 +126,25 @@
   },
   "logout": "退出登录",
   "main_content": "正文",
+  "moments": {
+    "edit": "编辑动态",
+    "publish": "发布动态",
+    "title": "动态",
+    "total$count_one": "{{count}} 条动态",
+    "total$count_other": "{{count}} 条动态"
+  },
   "next": "下一页",
   "no_more": "没有更多了",
   "preview": "预览",
   "previous": "上一页",
   "publish": {
+    "failed$message": "发布失败: {{message}}",
     "success": "发布成功",
     "title": "发布"
   },
   "reload": "重试",
   "save": "保存",
+  "saving": "保存中",
   "settings": {
     "cache": {
       "clear": {
@@ -157,7 +171,11 @@
     },
     "favicon": {
       "desc": "设置显示于浏览器的地址栏的图标（Favicon）",
-      "title": "网站图标"
+      "title": "网站图标",
+      "update": {
+        "failed$message": "网站图标更新失败，{{message}}",
+        "success": "网站图标更新成功"
+      }
     },
     "footer": {
       "desc": "设置显示于站点底部的内容（HTML）",
@@ -205,6 +223,7 @@
     }
   },
   "sitename": "站点名称",
+  "sort_order": "排序",
   "status": "状态",
   "summary": "简介",
   "tags": "标签",
@@ -219,6 +238,7 @@
     "title": "取消置顶"
   },
   "update": {
+    "failed$message": "更新失败: {{message}}",
     "success": "更新成功",
     "title": "更新"
   },
