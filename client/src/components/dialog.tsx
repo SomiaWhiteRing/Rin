@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "react-modal";
 import { Button, ButtonWithLoading } from "./button";
 
 export type Confirm = {
     title: string;
-    message: string;
+    message: ReactNode;
     onConfirm: () => Promise<void> | void;
 }
 
@@ -85,7 +85,7 @@ export function useConfirm() {
         setConfirm(null)
         setIsOpen(false)
     }
-    const showConfirm = (title: string, message: string, onConfirm?: () => Promise<void> | void) => {
+    const showConfirm = (title: string, message: ReactNode, onConfirm?: () => Promise<void> | void) => {
         setConfirm({
             title,
             message,
@@ -127,9 +127,9 @@ export function useConfirm() {
                 <h1 className="text-2xl font-bold t-primary">
                     {confirm?.title}
                 </h1>
-                <p className="text-base t-primary">
+                <div className="text-base t-primary whitespace-pre-wrap w-full">
                     {confirm?.message}
-                </p>
+                </div>
                 <div className="w-full flex flex-row items-center justify-center space-x-2 mt-4">
                     <ButtonWithLoading
                         loading={loading}

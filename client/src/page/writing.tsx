@@ -7,7 +7,7 @@ import {useCallback, useEffect, useState} from "react";
 import {Helmet} from "react-helmet";
 import {useTranslation} from "react-i18next";
 import Loading from 'react-loading';
-import {ShowAlertType, useAlert} from '../components/dialog';
+import {ShowAlertType, useAlert, useConfirm} from '../components/dialog';
 import {Checkbox, Input} from "../components/input";
 import {client} from "../main";
 import {headersWithAuth} from "../utils/auth";
@@ -15,6 +15,88 @@ import {Cache} from '../utils/cache';
 import {siteName} from "../utils/constants";
 import mermaid from 'mermaid';
 import { MarkdownEditor } from '../components/markdown_editor';
+
+type DiffLineType = "context" | "add" | "del";
+
+type DiffLine = {
+  type: DiffLineType;
+  oldNo?: number;
+  newNo?: number;
+  text: string;
+};
+
+function buildDiffLines(oldStr: string, newStr: string): DiffLine[] {
+  const oldLines = oldStr.split(/\r?\n/);
+  const newLines = newStr.split(/\r?\n/);
+  const result: DiffLine[] = [];
+  let i = 0;
+  let j = 0;
+  let oldNo = 1;
+  let newNo = 1;
+
+  while (i < oldLines.length || j < newLines.length) {
+    if (i < oldLines.length && j < newLines.length && oldLines[i] === newLines[j]) {
+      result.push({ type: "context", oldNo, newNo, text: oldLines[i] });
+      i++;
+      j++;
+      oldNo++;
+      newNo++;
+    } else {
+      if (i < oldLines.length) {
+        result.push({ type: "del", oldNo, text: oldLines[i] });
+        i++;
+        oldNo++;
+      }
+      if (j < newLines.length) {
+        result.push({ type: "add", newNo, text: newLines[j] });
+        j++;
+        newNo++;
+      }
+    }
+  }
+
+  return result;
+}
+
+function ContentDiffView({ oldContent, newContent }: { oldContent: string; newContent: string }) {
+  const lines = buildDiffLines(oldContent, newContent);
+
+  return (
+    <div className="mt-2 max-h-96 overflow-auto border rounded bg-gray-50">
+      <div className="px-2 py-1 text-xs font-mono text-gray-500 border-b">
+        @@ -1,{oldContent.split(/\r?\n/).length} +1,{newContent.split(/\r?\n/).length} @@
+      </div>
+      <table className="w-full text-xs font-mono">
+        <tbody>
+          {lines.map((line, idx) => {
+            const bg =
+              line.type === "add"
+                ? "bg-green-50"
+                : line.type === "del"
+                  ? "bg-red-50"
+                  : "bg-transparent";
+            const marker =
+              line.type === "add" ? "+" : line.type === "del" ? "-" : " ";
+            return (
+              <tr key={idx} className={bg}>
+                <td className="w-10 px-2 text-right text-gray-400 align-top">
+                  {line.oldNo ?? ""}
+                </td>
+                <td className="w-10 px-2 text-right text-gray-400 align-top border-l border-gray-200">
+                  {line.newNo ?? ""}
+                </td>
+                <td className="w-4 px-2 align-top text-gray-500">{marker}</td>
+                <td className="px-2 py-0.5 align-top whitespace-pre">
+                  {line.text === "" ? "\u00a0" : line.text}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 async function publish({
   title,
@@ -137,6 +219,7 @@ export function WritingPage({ id }: { id?: number }) {
   const [createdAt, setCreatedAt] = useState<Date | undefined>(new Date());
   const [publishing, setPublishing] = useState(false)
   const { showAlert, AlertUI } = useAlert()
+  const { showConfirm, ConfirmUI } = useConfirm()
   function publishButton() {
     if (publishing) return;
     const tagsplit =
@@ -197,15 +280,95 @@ export function WritingPage({ id }: { id?: number }) {
         })
         .then(({ data }) => {
           if (data && typeof data !== "string") {
-            if (data.title) setTitle(data.title);
-            if (data.hashtags)
-              setTags(data.hashtags.map(({ name }) => `#${name}`).join(" "));
-            if (data.alias) setAlias(data.alias);
-            setContent(data.content);
-            setSummary(data.summary);
-            setListed(data.listed === 1);
-            setDraft(data.draft === 1);
-            setCreatedAt(new Date(data.createdAt));
+            const remoteTitle = data.title ?? "";
+            const remoteTags = data.hashtags
+              ? data.hashtags.map(({ name }) => `#${name}`).join(" ")
+              : "";
+            const remoteAlias = data.alias ?? "";
+            const remoteContent = data.content ?? "";
+            const remoteSummary = data.summary ?? "";
+
+            const hasDiff =
+              remoteTitle !== title ||
+              remoteTags !== tags ||
+              remoteAlias !== alias ||
+              remoteContent !== content ||
+              remoteSummary !== summary;
+
+            if (!hasDiff) {
+              setListed(data.listed === 1);
+              setDraft(data.draft === 1);
+              setCreatedAt(new Date(data.createdAt));
+              return;
+            }
+
+            const diffLines: string[] = [];
+
+            if (remoteTitle !== title) {
+              diffLines.push(`[${t("title")}]`);
+              diffLines.push(`- ${t("local")}: ${title || t("empty")}`);
+              diffLines.push(`+ ${t("remote")}: ${remoteTitle || t("empty")}`);
+              diffLines.push("");
+            }
+
+            if (remoteTags !== tags) {
+              diffLines.push(`[${t("tags")}]`);
+              diffLines.push(`- ${t("local")}: ${tags || t("empty")}`);
+              diffLines.push(`+ ${t("remote")}: ${remoteTags || t("empty")}`);
+              diffLines.push("");
+            }
+
+            if (remoteAlias !== alias) {
+              diffLines.push(`[${t("alias")}]`);
+              diffLines.push(`- ${t("local")}: ${alias || t("empty")}`);
+              diffLines.push(`+ ${t("remote")}: ${remoteAlias || t("empty")}`);
+              diffLines.push("");
+            }
+
+            if (remoteSummary !== summary) {
+              diffLines.push(`[${t("summary")}]`);
+              diffLines.push(`- ${t("local")}: ${summary || t("empty")}`);
+              diffLines.push(`+ ${t("remote")}: ${remoteSummary || t("empty")}`);
+              diffLines.push("");
+            }
+
+            const metaMessage = diffLines.join("\n");
+
+            const messageNode = (
+              <div className="space-y-3">
+                {metaMessage && (
+                  <pre className="whitespace-pre-wrap font-mono text-xs bg-gray-50 p-2 rounded border">
+                    {metaMessage}
+                  </pre>
+                )}
+                {remoteContent !== content && (
+                  <div>
+                    <div className="text-sm font-semibold mb-1">
+                      {t("content")}
+                    </div>
+                    <ContentDiffView
+                      oldContent={content || ""}
+                      newContent={remoteContent || ""}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+
+            showConfirm(
+              t("writing.remote_diff_title"),
+              messageNode,
+              () => {
+                if (remoteTitle) setTitle(remoteTitle);
+                if (remoteTags) setTags(remoteTags);
+                if (remoteAlias) setAlias(remoteAlias);
+                setContent(remoteContent);
+                setSummary(remoteSummary);
+                setListed(data.listed === 1);
+                setDraft(data.draft === 1);
+                setCreatedAt(new Date(data.createdAt));
+              }
+            );
           }
         });
     }
@@ -349,6 +512,7 @@ export function WritingPage({ id }: { id?: number }) {
         </div>
       </div>
       <AlertUI />
+      <ConfirmUI />
     </>
 
   );

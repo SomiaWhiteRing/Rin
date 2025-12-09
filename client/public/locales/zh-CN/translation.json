@@ -254,5 +254,12 @@
     "self_only": "仅自己可见"
   },
   "writing": "写作",
+  "local": "本地",
+  "remote": "远端",
+  "empty": "（空）",
+  "content.local_changed": "本地内容已修改",
+  "content.remote_changed": "远端内容与本地不同",
+  "writing.remote_diff_title": "检测到本地与远端内容不一致，是否以远端为准？",
+  "writing.remote_diff_default_message": "检测到本地与远端内容不一致，确认后将使用远端内容覆盖本地缓存。",
   "year$year": "{{year}} 年"
 }
