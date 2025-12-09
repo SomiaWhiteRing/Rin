@@ -58,8 +58,48 @@ function buildDiffLines(oldStr: string, newStr: string): DiffLine[] {
   return result;
 }
 
+function collapseContextLines(lines: DiffLine[], contextRadius = 3): DiffLine[] {
+  const important = lines.map(
+    (l) => l.type === "add" || l.type === "del",
+  );
+  if (!important.some(Boolean)) return lines;
+
+  const keep = new Array(lines.length).fill(false);
+  for (let idx = 0; idx < lines.length; idx++) {
+    if (!important[idx]) continue;
+    const start = Math.max(0, idx - contextRadius);
+    const end = Math.min(lines.length - 1, idx + contextRadius);
+    for (let k = start; k <= end; k++) keep[k] = true;
+  }
+
+  const collapsed: DiffLine[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (keep[i] || lines[i].type !== "context") {
+      collapsed.push(lines[i]);
+      i++;
+    } else {
+      let j = i;
+      while (
+        j < lines.length &&
+        !keep[j] &&
+        lines[j].type === "context"
+      ) {
+        j++;
+      }
+      collapsed.push({
+        type: "context",
+        text: "…",
+      });
+      i = j;
+    }
+  }
+
+  return collapsed;
+}
+
 function ContentDiffView({ oldContent, newContent }: { oldContent: string; newContent: string }) {
-  const lines = buildDiffLines(oldContent, newContent);
+  const lines = collapseContextLines(buildDiffLines(oldContent, newContent));
 
   return (
     <div className="mt-2 max-h-96 overflow-auto border rounded bg-gray-50">
