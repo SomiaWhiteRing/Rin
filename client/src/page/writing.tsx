@@ -197,12 +197,12 @@ export function WritingPage({ id }: { id?: number }) {
         })
         .then(({ data }) => {
           if (data && typeof data !== "string") {
-            if (title == "" && data.title) setTitle(data.title);
-            if (tags == "" && data.hashtags)
+            if (data.title) setTitle(data.title);
+            if (data.hashtags)
               setTags(data.hashtags.map(({ name }) => `#${name}`).join(" "));
-            if (alias == "" && data.alias) setAlias(data.alias);
-            if (content == "") setContent(data.content);
-            if (summary == "") setSummary(data.summary);
+            if (data.alias) setAlias(data.alias);
+            setContent(data.content);
+            setSummary(data.summary);
             setListed(data.listed === 1);
             setDraft(data.draft === 1);
             setCreatedAt(new Date(data.createdAt));
@@ -353,4 +353,3 @@ export function WritingPage({ id }: { id?: number }) {
 
   );
 }
-
