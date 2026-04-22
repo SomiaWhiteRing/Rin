@@ -23,12 +23,16 @@ export interface Feed {
   id: number;
   title: string | null;
   content: string;
+  summary?: string;
+  alias?: string | null;
   uid: number;
   createdAt: string;
   updatedAt: string;
   ai_summary: string;
   ai_summary_status: "idle" | "pending" | "processing" | "completed" | "failed";
   ai_summary_error: string;
+  listed?: number;
+  draft?: number;
   hashtags: Array<{ id: number; name: string }>;
   user: {
     avatar: string | null;
