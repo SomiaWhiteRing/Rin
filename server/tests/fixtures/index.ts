@@ -110,12 +110,14 @@ export function createMockDB() {
         CREATE TABLE IF NOT EXISTS comments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             feed_id INTEGER NOT NULL,
-            user_id INTEGER NOT NULL,
+            user_id INTEGER,
+            author_name TEXT NOT NULL,
+            author_avatar TEXT,
             content TEXT NOT NULL,
             created_at INTEGER DEFAULT (unixepoch()),
             updated_at INTEGER DEFAULT (unixepoch()),
             FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
         );
 
         -- Hashtags table (note: named "hashtags" not "tags")
@@ -445,8 +447,8 @@ export function seedTestData(sqlite: Database) {
 
     // Insert test comments
     sqlite.exec(`
-        INSERT INTO comments (id, feed_id, user_id, content, created_at) VALUES 
-            (1, 1, 2, 'Test comment 1', unixepoch()),
-            (2, 1, 1, 'Test comment 2', unixepoch())
+        INSERT INTO comments (id, feed_id, user_id, author_name, author_avatar, content, created_at) VALUES 
+            (1, 1, 2, 'testuser2', 'avatar2.png', 'Test comment 1', unixepoch()),
+            (2, 1, 1, 'testuser1', 'avatar1.png', 'Test comment 2', unixepoch())
     `);
 }

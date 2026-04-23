@@ -150,8 +150,8 @@ describe('API Client', () => {
   describe('Comment API', () => {
     it('should fetch comments for feed', async () => {
       const mockResponse = [
-        { id: 1, content: 'Comment 1', user: { id: 1, username: 'user1' } },
-        { id: 2, content: 'Comment 2', user: { id: 2, username: 'user2' } },
+        { id: 1, content: 'Comment 1', author: { id: 1, username: 'user1', avatar: null, permission: null, isGuest: false } },
+        { id: 2, content: 'Comment 2', author: { id: null, username: 'Guest', avatar: null, permission: null, isGuest: true } },
       ]
 
       mockFetch.mockResolvedValueOnce(createMockResponse({
@@ -170,18 +170,17 @@ describe('API Client', () => {
     })
 
     it('should create comment', async () => {
-      const mockResponse = { id: 1, content: 'New comment', user: { id: 1, username: 'user1' } }
-      const commentData = { content: 'New comment' }
+      const commentData = { authorName: 'Guest User', content: 'New comment' }
 
       mockFetch.mockResolvedValueOnce(createMockResponse({
         ok: true,
-        headers: new Map([['content-type', 'application/json']]),
-        json: async () => mockResponse,
+        status: 204,
+        headers: new Map([['content-length', '0']]),
       }))
 
       const result = await api.comment.create(1, commentData)
 
-      expect(result.data).toEqual(mockResponse)
+      expect(result.data).toBeUndefined()
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost/api/comment/1',
         expect.objectContaining({

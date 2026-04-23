@@ -93,8 +93,12 @@
   "clear": "清除",
   "close": "关闭",
   "comment": {
+    "author_label": "昵称",
+    "author_required": "昵称不能为空",
     "empty": "评论内容不能为空",
+    "hint": "无需登录，填写昵称后即可评论",
     "placeholder": {
+      "author": "输入一个显示昵称",
       "title": "说点什么吧"
     },
     "submit": "发表评论",
@@ -592,7 +596,7 @@
         "suggestion": "在公开站点前请立即修改默认用户名或密码。"
       },
       "oauth_missing": {
-        "impact": "当前只能使用本地密码账号登录，其他用户无法通过 OAuth 登录并评论。",
+        "impact": "当前只能使用本地密码账号登录，其他用户无法通过 OAuth 登录。",
         "summary": "GitHub OAuth 未配置。",
         "suggestion": "如果希望其他用户登录，请配置 RIN_GITHUB_CLIENT_ID/RIN_GITHUB_CLIENT_SECRET。"
       },

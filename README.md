@@ -29,7 +29,7 @@ https://xeu.life
 - **Custom Slugs**: Assign friendly URLs like `https://yourblog.com/about` using custom article aliases.
 - **Unlisted Posts**: Option to keep articles out of the public homepage listing.
 - **Blogroll**: Add links to friends' blogs. The backend automatically checks link availability every 20 minutes.
-- **Comment System**: Reply to comments or moderate them with delete functionality.
+- **Comment System**: Store anonymous comments in Cloudflare D1 without sign-in, with admin moderation support.
 - **Webhook Notifications**: Receive real-time alerts for new comments via configurable webhooks.
 - **Featured Images**: Automatically detect the first image in an article and use it as the cover image in listings.
 - **Tag Parsing**: Input tags like `#Blog #Cloudflare` and have them automatically parsed and displayed.

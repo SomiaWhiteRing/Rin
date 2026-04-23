@@ -93,8 +93,12 @@
   "clear": "Clear",
   "close": "Close",
   "comment": {
+    "author_label": "Name",
+    "author_required": "Name is required",
     "empty": "Comment cannot be empty",
+    "hint": "No sign-in required. Enter a name and post your comment.",
     "placeholder": {
+      "author": "Enter a display name",
       "title": "Say something..."
     },
     "submit": "Submit Comment",
@@ -592,7 +596,7 @@
         "suggestion": "Change the default username or password immediately before exposing the site."
       },
       "oauth_missing": {
-        "impact": "Only the local password account can sign in. Other users cannot log in and comment through OAuth.",
+        "impact": "Only the local password account can sign in. Other users cannot log in through OAuth.",
         "summary": "GitHub OAuth is not configured.",
         "suggestion": "Configure RIN_GITHUB_CLIENT_ID/RIN_GITHUB_CLIENT_SECRET if you expect other users to log in."
       },

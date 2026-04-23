@@ -21,6 +21,8 @@ import mermaid from "mermaid";
 import { AdjacentSection } from "../components/adjacent_feed.tsx";
 import { stripImageUrlMetadata } from "../utils/image-upload";
 
+const COMMENT_AUTHOR_STORAGE_KEY = "rin.comment.author-name";
+
 function extractFirstMarkdownImageUrl(content: string) {
   const match = /!\[.*?\]\((\S+?)(?:\s+"[^"]*")?\)/.exec(content);
   if (!match) {
@@ -375,23 +377,36 @@ function CommentInput({
   onRefresh: () => void;
 }) {
   const { t } = useTranslation();
+  const profile = useContext(ProfileContext);
+  const [authorName, setAuthorName] = useState("");
   const [content, setContent] = useState("");
   const [error, setError] = useState("");
   const { showAlert, AlertUI } = useAlert();
-  const profile = useContext(ProfileContext);
-  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (authorName) return;
+
+    const storedName = typeof window === "undefined"
+      ? ""
+      : window.localStorage.getItem(COMMENT_AUTHOR_STORAGE_KEY) || "";
+
+    setAuthorName(storedName || profile?.name || "");
+  }, [authorName, profile?.name]);
+
   function errorHumanize(error: string) {
-    if (error === "Unauthorized") return t("login.required");
+    if (error === "Author name is required") return t("comment.author_required");
     else if (error === "Content is required") return t("comment.empty");
     return error;
   }
   function submit() {
-    if (!profile) {
-      setLocation('/login')
-      return;
+    const nextAuthorName = authorName.trim();
+
+    if (typeof window !== "undefined" && nextAuthorName) {
+      window.localStorage.setItem(COMMENT_AUTHOR_STORAGE_KEY, nextAuthorName);
     }
+
     client.comment
-      .create(parseInt(id), { content })
+      .create(parseInt(id), { authorName: nextAuthorName, content })
       .then(({ error }) => {
         if (error) {
           setError(errorHumanize(error.value as string));
@@ -406,10 +421,19 @@ function CommentInput({
   }
   return (
     <div className="w-full rounded-2xl bg-w t-primary p-6 items-end flex flex-col">
-      <div className="flex flex-col w-full items-start mb-4">
+      <div className="flex flex-col w-full items-start gap-2 mb-4">
+        <label htmlFor="comment-author">{t("comment.author_label")}</label>
+        <input
+          id="comment-author"
+          placeholder={t("comment.placeholder.author")}
+          className="bg-w w-full rounded-lg"
+          value={authorName}
+          onChange={(e) => setAuthorName(e.target.value)}
+        />
+        <p className="text-sm t-secondary">{t("comment.hint")}</p>
         <label htmlFor="comment">{t("comment.title")}</label>
       </div>
-      {profile ? (<>
+      <>
         <textarea
           id="comment"
           placeholder={t("comment.placeholder.title")}
@@ -423,16 +447,7 @@ function CommentInput({
         >
           {t("comment.submit")}
         </button>
-      </>      ) : (
-        <div className="flex flex-row w-full items-center justify-center space-x-2 py-12">
-          <button
-            className="mt-2 bg-theme text-white px-4 py-2 rounded-full"
-            onClick={() => setLocation('/login')}
-          >
-            {t("login.required")}
-          </button>
-        </div>
-      )}
+      </>
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
       <AlertUI />
     </div>
@@ -444,11 +459,12 @@ type Comment = {
   content: string;
   createdAt: Date;
   updatedAt: Date;
-  user: {
-    id: number;
+  author: {
+    id: number | null;
     username: string;
     avatar: string | null;
     permission: number | null;
+    isGuest: boolean;
   };
 };
 
@@ -542,13 +558,13 @@ function CommentItem({
   return (
     <div className="flex flex-row items-start rounded-xl mt-2">
       <img
-        src={comment.user.avatar || ""}
+        src={comment.author.avatar || "/avatar.png"}
         className="w-8 h-8 rounded-full mt-4"
       />
       <div className="flex flex-col flex-1 w-0 ml-2 bg-w rounded-xl p-4">
         <div className="flex flex-row">
           <span className="t-primary text-base font-bold">
-            {comment.user.username}
+            {comment.author.username}
           </span>
           <div className="flex-1 w-0" />
           <span
@@ -560,7 +576,7 @@ function CommentItem({
         </div>
         <p className="t-primary break-words">{comment.content}</p>
         <div className="flex flex-row justify-end">
-          {(profile?.permission || profile?.id == comment.user.id) && (
+          {(profile?.permission || (comment.author.id != null && profile?.id == comment.author.id)) && (
             <Popup
               arrow={false}
               trigger={

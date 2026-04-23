@@ -169,15 +169,17 @@ export interface Comment {
   content: string;
   createdAt: string;
   updatedAt: string;
-  user: {
-    id: number;
+  author: {
+    id: number | null;
     username: string;
     avatar: string | null;
     permission: number | null;
+    isGuest: boolean;
   };
 }
 
 export interface CreateCommentRequest {
+  authorName: string;
   content: string;
 }
 

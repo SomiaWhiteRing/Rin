@@ -354,8 +354,8 @@ class CommentAPI {
   }
 
   // POST /api/comment/:feed
-  async create(feedId: number, body: CreateCommentRequest): Promise<ApiResponse<Comment>> {
-    return this.http.post<Comment>(`/api/comment/${feedId}`, body);
+  async create(feedId: number, body: CreateCommentRequest): Promise<ApiResponse<void>> {
+    return this.http.post<void>(`/api/comment/${feedId}`, body);
   }
 
   // DELETE /api/comment/:id

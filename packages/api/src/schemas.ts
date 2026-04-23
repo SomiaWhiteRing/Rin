@@ -61,6 +61,7 @@ export const updateProfileSchema = t.Object({
 // ============================================================================
 
 export const commentCreateSchema = t.Object({
+  authorName: t.String(),
   content: t.String(),
 });
 

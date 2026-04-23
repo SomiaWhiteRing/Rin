@@ -93,8 +93,12 @@
   "clear": "クリア",
   "close": "閉じる",
   "comment": {
+    "author_label": "名前",
+    "author_required": "名前を入力してください",
     "empty": "コメント内容は空にできません",
+    "hint": "ログイン不要です。名前を入力すればコメントできます。",
     "placeholder": {
+      "author": "表示名を入力してください",
       "title": "何か言ってください..."
     },
     "submit": "コメントを投稿",
@@ -583,7 +587,7 @@
         "suggestion": "サイトを公開する前に既定のユーザー名またはパスワードを直ちに変更してください。"
       },
       "oauth_missing": {
-        "impact": "現在はローカルのパスワードアカウントしか使えず、他のユーザーは OAuth でログインしてコメントできません。",
+        "impact": "現在はローカルのパスワードアカウントしか使えず、他のユーザーは OAuth でログインできません。",
         "summary": "GitHub OAuth が設定されていません。",
         "suggestion": "他のユーザーにもログインを許可するなら、RIN_GITHUB_CLIENT_ID/RIN_GITHUB_CLIENT_SECRET を設定してください。"
       },

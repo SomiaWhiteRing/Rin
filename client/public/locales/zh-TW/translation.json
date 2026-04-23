@@ -93,8 +93,12 @@
   "clear": "清除",
   "close": "關閉",
   "comment": {
+    "author_label": "暱稱",
+    "author_required": "暱稱不能為空",
     "empty": "留言內容不能為空",
+    "hint": "無需登入，填寫暱稱後即可留言",
     "placeholder": {
+      "author": "輸入顯示用暱稱",
       "title": "說點什麼吧"
     },
     "submit": "發表留言",
@@ -592,7 +596,7 @@
         "suggestion": "在公開網站之前請立即修改預設使用者名稱或密碼。"
       },
       "oauth_missing": {
-        "impact": "目前只能使用本地密碼帳號登入，其他使用者無法透過 OAuth 登入並留言。",
+        "impact": "目前只能使用本地密碼帳號登入，其他使用者無法透過 OAuth 登入。",
         "summary": "GitHub OAuth 未配置。",
         "suggestion": "如果希望其他使用者登入，請配置 RIN_GITHUB_CLIENT_ID/RIN_GITHUB_CLIENT_SECRET。"
       },
