@@ -96,7 +96,7 @@
     "author_label": "昵称",
     "author_required": "昵称不能为空",
     "empty": "评论内容不能为空",
-    "hint": "无需登录，填写昵称后即可评论",
+    "hint": "填写昵称后即可评论",
     "placeholder": {
       "author": "输入一个显示昵称",
       "title": "说点什么吧"

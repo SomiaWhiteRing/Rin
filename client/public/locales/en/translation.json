@@ -96,7 +96,7 @@
     "author_label": "Name",
     "author_required": "Name is required",
     "empty": "Comment cannot be empty",
-    "hint": "No sign-in required. Enter a name and post your comment.",
+    "hint": "Enter a name and post your comment.",
     "placeholder": {
       "author": "Enter a display name",
       "title": "Say something..."

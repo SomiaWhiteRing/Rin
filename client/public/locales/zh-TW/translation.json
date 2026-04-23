@@ -96,7 +96,7 @@
     "author_label": "暱稱",
     "author_required": "暱稱不能為空",
     "empty": "留言內容不能為空",
-    "hint": "無需登入，填寫暱稱後即可留言",
+    "hint": "填寫暱稱後即可留言",
     "placeholder": {
       "author": "輸入顯示用暱稱",
       "title": "說點什麼吧"
