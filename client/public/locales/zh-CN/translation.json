@@ -154,7 +154,7 @@
       "rejected": "拒绝",
       "waiting": "待审核"
     },
-    "title": "朋友们"
+    "title": "喜欢的人"
   },
   "github_login": "Github 登录",
   "hashtags": "标签",
@@ -328,7 +328,7 @@
         "title": "友链申请"
       },
       "health": {
-        "desc": "启用朋友们链接可访问性检查",
+        "desc": "启用喜欢的人链接可访问性检查",
         "title": "友链健康监测",
         "ua": {
           "desc": "设置友链可访问性检查时使用的 User-Agent, 默认 'Rin-Check/1.0'",
