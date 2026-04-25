@@ -276,6 +276,17 @@
         "success": "ファビコンの更新が成功しました"
       }
     },
+    "tinypng": {
+      "enable": {
+        "title": "TinyPNG 圧縮を有効にする",
+        "desc": "PNG、JPEG、WebP のアップロード時に TinyPNG で圧縮してからオブジェクトストレージへ保存します。"
+      },
+      "api_key": {
+        "title": "TinyPNG API Key",
+        "desc": "TinyPNG/Tinify API Key を入力します。キーはサーバー設定のみに保存されます。",
+        "placeholder_set": "設定済み。新しいキーを入力して更新"
+      }
+    },
   "footer": {
     "desc": "サイトのフッターコンテンツを設定する（HTML）",
     "title": "フッター"

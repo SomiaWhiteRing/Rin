@@ -14,6 +14,7 @@ export type SettingsDraft = {
 export type SettingsLoadState = {
   draft: SettingsDraft;
   hasStoredAiApiKey: boolean;
+  hasStoredTinyPngApiKey: boolean;
 };
 
 export const AI_PROVIDER_PRESETS = [
@@ -56,9 +57,13 @@ export function normalizeSettingsState(
   const clientConfig = { ...(data?.clientConfig ?? {}) };
   const serverConfig = { ...(data?.serverConfig ?? {}) };
   const hasStoredAiApiKey = serverConfig["ai_summary.api_key"] === MASKED_SECRET;
+  const hasStoredTinyPngApiKey = serverConfig["tinypng.api_key"] === MASKED_SECRET;
 
   if (hasStoredAiApiKey) {
     serverConfig["ai_summary.api_key"] = "";
+  }
+  if (hasStoredTinyPngApiKey) {
+    serverConfig["tinypng.api_key"] = "";
   }
 
   return {
@@ -67,6 +72,7 @@ export function normalizeSettingsState(
       serverConfig,
     },
     hasStoredAiApiKey,
+    hasStoredTinyPngApiKey,
   };
 }
 

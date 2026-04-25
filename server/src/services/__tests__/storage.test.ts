@@ -108,12 +108,12 @@ describe('StorageService', () => {
         `);
     }
 
-    function createAppWithEnv(appEnv: Env, uid?: number) {
+    function createAppWithEnv(appEnv: Env, uid?: number, serverConfig = new TestCacheImpl()) {
         const serviceApp = new Hono<{ Bindings: Env; Variables: Variables }>();
         serviceApp.use(createMiddleware<{ Bindings: Env; Variables: Variables }>(async (c, next) => {
             c.set('db', db);
             c.set('cache', new TestCacheImpl());
-            c.set('serverConfig', new TestCacheImpl());
+            c.set('serverConfig', serverConfig);
             c.set('clientConfig', new TestCacheImpl());
             c.set('jwt', {
                 sign: async (payload: any) => `mock_token_${payload.id}`,
@@ -190,6 +190,77 @@ describe('StorageService', () => {
             expect(putCalls[0]?.type).toBe('text/plain;charset=utf-8');
             const payload = await res.json() as { url: string };
             expect(payload.url).toMatch(/^https:\/\/images\.example\.com\/images\/[a-f0-9]+\.txt$/);
+        });
+
+        it('should compress supported images with TinyPNG before upload when enabled', async () => {
+            const originalFetch = globalThis.fetch;
+            const storedBodies: string[] = [];
+            const r2Env = createMockEnv({
+                R2_BUCKET: {
+                    put: async (_key: string, value: any) => {
+                        storedBodies.push(new TextDecoder().decode(value));
+                        return {
+                            key: _key,
+                            version: '1',
+                            size: value.byteLength || 0,
+                            etag: 'etag',
+                            httpEtag: 'etag',
+                            uploaded: new Date(),
+                            storageClass: 'Standard',
+                            checksums: {} as R2Checksums,
+                            writeHttpMetadata: () => {},
+                        } as unknown as R2Object;
+                    },
+                } as unknown as R2Bucket,
+                S3_ACCESS_HOST: 'https://images.example.com' as any,
+                S3_ENDPOINT: '' as any,
+                S3_BUCKET: '' as any,
+                S3_ACCESS_KEY_ID: '',
+                S3_SECRET_ACCESS_KEY: '',
+            });
+            const serverConfig = new TestCacheImpl();
+            await serverConfig.set('tinypng.enabled', 'true');
+            await serverConfig.set('tinypng.api_key', 'test-key');
+
+            globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+                const url = String(input);
+                if (url === 'https://api.tinify.com/shrink') {
+                    expect(init?.method).toBe('POST');
+                    expect(init?.headers).toMatchObject({
+                        Authorization: 'Basic YXBpOnRlc3Qta2V5',
+                    });
+                    return new Response(JSON.stringify({ output: { url: 'https://api.tinify.com/output/test' } }), {
+                        status: 201,
+                        headers: { 'Content-Type': 'application/json' },
+                    });
+                }
+
+                if (url === 'https://api.tinify.com/output/test') {
+                    return new Response('compressed image', {
+                        status: 200,
+                        headers: { 'Content-Type': 'image/png' },
+                    });
+                }
+
+                return originalFetch(input, init);
+            }) as typeof fetch;
+
+            try {
+                const r2App = createAppWithEnv(r2Env, 1, serverConfig);
+                const formData = new FormData();
+                formData.append('key', 'test.png');
+                formData.append('file', new File(['original image'], 'test.png', { type: 'image/png' }));
+
+                const res = await r2App.request('/', {
+                    method: 'POST',
+                    body: formData,
+                }, r2Env);
+
+                expect(res.status).toBe(200);
+                expect(storedBodies).toEqual(['compressed image']);
+            } finally {
+                globalThis.fetch = originalFetch;
+            }
         });
 
         it('should return an /api/blob URL when R2 is configured without S3_ACCESS_HOST', async () => {

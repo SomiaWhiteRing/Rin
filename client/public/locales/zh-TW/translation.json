@@ -285,6 +285,17 @@
         "success": "網站圖標更新成功"
       }
     },
+    "tinypng": {
+      "enable": {
+        "title": "啟用 TinyPNG 壓縮",
+        "desc": "上傳 PNG、JPEG 或 WebP 圖片時先透過 TinyPNG 壓縮，再寫入物件儲存。"
+      },
+      "api_key": {
+        "title": "TinyPNG API Key",
+        "desc": "填寫 TinyPNG/Tinify API Key。密鑰只會保存在服務端設定中。",
+        "placeholder_set": "已設定，輸入新密鑰以更新"
+      }
+    },
   "footer": {
     "desc": "設定顯示於網站底部的內容（HTML）",
     "title": "網站底部內容"

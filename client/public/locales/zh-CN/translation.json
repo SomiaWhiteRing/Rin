@@ -285,6 +285,17 @@
         "success": "网站图标更新成功"
       }
     },
+    "tinypng": {
+      "enable": {
+        "title": "启用 TinyPNG 压缩",
+        "desc": "上传 PNG、JPEG 或 WebP 图片时先通过 TinyPNG 压缩，再写入对象存储。"
+      },
+      "api_key": {
+        "title": "TinyPNG API Key",
+        "desc": "填写 TinyPNG/Tinify API Key。密钥只保存在服务端配置中。",
+        "placeholder_set": "已设置，输入新密钥以更新"
+      }
+    },
   "footer": {
     "desc": "设置显示于站点底部的内容（HTML）",
     "title": "站点底部内容"

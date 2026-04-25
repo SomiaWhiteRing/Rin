@@ -103,6 +103,7 @@ describe("ConfigService", () => {
                 },
                 body: JSON.stringify({
                     "ai_summary.api_key": "secret_key_123",
+                    "tinypng.api_key": "tiny_secret_123",
                 }),
             });
 
@@ -117,6 +118,7 @@ describe("ConfigService", () => {
             const data = await res.json() as Record<string, any>;
             // API key should be masked
             expect(data["ai_summary.api_key"]).toBe("••••••••");
+            expect(data["tinypng.api_key"]).toBe("••••••••");
         });
     });
 

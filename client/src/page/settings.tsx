@@ -62,6 +62,7 @@ export function Settings() {
   const [draft, setDraft] = useState<SettingsDraft>({ clientConfig: {}, serverConfig: {} });
   const [initialDraft, setInitialDraft] = useState<SettingsDraft>({ clientConfig: {}, serverConfig: {} });
   const [hasStoredAiApiKey, setHasStoredAiApiKey] = useState(false);
+  const [hasStoredTinyPngApiKey, setHasStoredTinyPngApiKey] = useState(false);
   const ref = useRef(false);
   const initialDraftRef = useRef<SettingsDraft>({ clientConfig: {}, serverConfig: {} });
   const { showAlert, AlertUI } = useAlert();
@@ -78,6 +79,7 @@ export function Settings() {
         setInitialDraft(state.draft);
         initialDraftRef.current = state.draft;
         setHasStoredAiApiKey(state.hasStoredAiApiKey);
+        setHasStoredTinyPngApiKey(state.hasStoredTinyPngApiKey);
         mergeSessionConfig(state.draft.clientConfig);
         applyThemeColor(getDraftThemeColor(state.draft));
       })
@@ -120,6 +122,9 @@ export function Settings() {
       setInitialDraft(state.draft);
       initialDraftRef.current = state.draft;
       setHasStoredAiApiKey(state.hasStoredAiApiKey || aiValue.apiKey.trim().length > 0);
+      setHasStoredTinyPngApiKey(
+        state.hasStoredTinyPngApiKey || String(draft.serverConfig["tinypng.api_key"] ?? "").trim().length > 0,
+      );
       mergeSessionConfig(state.draft.clientConfig);
       window.dispatchEvent(new Event("storage"));
       showAlert(t("settings.ai_summary.save_success"));
@@ -462,6 +467,24 @@ export function Settings() {
             description={t("settings.favicon.desc")}
             accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
             onFileChange={handleFaviconChange}
+          />
+          <ItemSwitch
+            title={t("settings.tinypng.enable.title")}
+            description={t("settings.tinypng.enable.desc")}
+            checked={serverConfig.getBoolean("tinypng.enabled")}
+            onChange={(checked) => {
+              setConfigValue("server", "tinypng.enabled", checked);
+            }}
+          />
+          <ItemInput
+            title={t("settings.tinypng.api_key.title")}
+            description={t("settings.tinypng.api_key.desc")}
+            configKeyTitle="TinyPNG API Key"
+            value={String(serverConfig.get("tinypng.api_key") ?? "")}
+            placeholder={hasStoredTinyPngApiKey ? t("settings.tinypng.api_key.placeholder_set") : ""}
+            onChange={(value) => {
+              setConfigValue("server", "tinypng.api_key", value);
+            }}
           />
           <ItemInput
             title={t("settings.footer.title")}

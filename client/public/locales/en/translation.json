@@ -285,6 +285,17 @@
         "success": "Favicon update was successful"
       }
     },
+    "tinypng": {
+      "enable": {
+        "title": "Enable TinyPNG compression",
+        "desc": "Compress PNG, JPEG, or WebP uploads with TinyPNG before storing them."
+      },
+      "api_key": {
+        "title": "TinyPNG API Key",
+        "desc": "Enter your TinyPNG/Tinify API key. The key is stored only in server config.",
+        "placeholder_set": "Set. Enter a new key to update"
+      }
+    },
   "footer": {
     "desc": "Set the footer content of the site (HTML)",
     "title": "Footer"

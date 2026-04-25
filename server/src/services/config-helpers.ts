@@ -166,6 +166,12 @@ export async function persistRegularConfig(
   updates: Record<string, unknown>,
 ) {
   for (const key in updates) {
+    if (
+      SENSITIVE_SERVER_CONFIG_FIELDS.includes(key as (typeof SENSITIVE_SERVER_CONFIG_FIELDS)[number]) &&
+      (updates[key] === "••••••••" || updates[key] === "")
+    ) {
+      continue;
+    }
     await config.set(key, updates[key], false);
   }
   await config.save();

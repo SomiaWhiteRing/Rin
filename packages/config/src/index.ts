@@ -30,6 +30,8 @@ export const SERVER_CONFIG_DEFAULTS = new Map(
     "webhook.content_type": "application/json",
     "webhook.headers": "{}",
     "webhook.body_template": "{\"content\":\"{{message}}\"}",
+    "tinypng.enabled": false,
+    "tinypng.api_key": "",
   }),
 );
 
@@ -50,7 +52,9 @@ export const AI_CONFIG_KEYS = [
   `${AI_CONFIG_PREFIX}api_url`,
 ] as const;
 
-export const SENSITIVE_SERVER_CONFIG_FIELDS = [`${AI_CONFIG_PREFIX}api_key`] as const;
+export const TINYPNG_API_KEY = "tinypng.api_key";
+
+export const SENSITIVE_SERVER_CONFIG_FIELDS = [`${AI_CONFIG_PREFIX}api_key`, TINYPNG_API_KEY] as const;
 
 export const DEFAULT_AI_CONFIG: AIConfig = {
   enabled: false,
