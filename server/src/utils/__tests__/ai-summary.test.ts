@@ -105,4 +105,34 @@ describe("generateAISummaryResult", () => {
       content: "external content",
     });
   });
+
+  it("sends the full content without truncation", async () => {
+    getAIConfigMock.mockResolvedValue({
+      enabled: true,
+      provider: "worker-ai",
+      model: "llama-3-8b",
+      api_key: "",
+      api_url: "",
+    });
+
+    const longContent = `${"a".repeat(8000)}tail`;
+    const calls: Array<any> = [];
+    const { generateAISummaryResult } = await import("../ai");
+
+    const result = await generateAISummaryResult({
+      AI: {
+        run: async (_model: string, payload: any) => {
+          calls.push(payload);
+          return { response: "summary" };
+        },
+      },
+    } as unknown as Env, {} as any, longContent);
+
+    expect(result.summary).toBe("summary");
+    expect(calls).toHaveLength(1);
+    expect(calls[0].messages[1]).toEqual({
+      role: "user",
+      content: longContent,
+    });
+  });
 });

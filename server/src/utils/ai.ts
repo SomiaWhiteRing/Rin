@@ -219,13 +219,9 @@ export async function generateAISummaryResult(
     }
 
     const { provider, model } = config;
-    const maxContentLength = 8000;
-    const truncatedContent = content.length > maxContentLength
-        ? content.slice(0, maxContentLength) + "..."
-        : content;
     const summaryMessages = [
         { role: "system" as const, content: AI_SUMMARY_SYSTEM_PROMPT },
-        { role: "user" as const, content: truncatedContent },
+        { role: "user" as const, content },
     ];
 
     try {
