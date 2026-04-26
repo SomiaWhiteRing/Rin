@@ -59,6 +59,56 @@ export function listContentImageUrls(content: string) {
     return [...listMarkdownImageUrls(content), ...listHtmlImageUrls(content)];
 }
 
+function getComparableUrl(value?: string | null) {
+    if (!value) {
+        return undefined;
+    }
+
+    try {
+        return new URL(value);
+    } catch {
+        return undefined;
+    }
+}
+
+function isSameOriginUrl(url: URL, origin?: string) {
+    const comparable = getComparableUrl(origin);
+    return comparable ? url.origin === comparable.origin : false;
+}
+
+export function isExternalContentImageUrl(url: string, env?: Env, baseUrl?: string) {
+    const metadata = parseImageMetadataFromUrl(url);
+    const src = metadata.src;
+    if (!src) {
+        return false;
+    }
+
+    let parsed: URL;
+    try {
+        parsed = new URL(src);
+    } catch {
+        return false;
+    }
+
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return false;
+    }
+
+    if (isSameOriginUrl(parsed, baseUrl)) {
+        return false;
+    }
+
+    if (isSameOriginUrl(parsed, env?.S3_ACCESS_HOST) || isSameOriginUrl(parsed, env?.S3_ENDPOINT)) {
+        return false;
+    }
+
+    return true;
+}
+
+export function contentHasExternalImages(content: string, env?: Env, baseUrl?: string) {
+    return listContentImageUrls(content).some((url) => isExternalContentImageUrl(url, env, baseUrl));
+}
+
 export function contentHasImagesMissingMetadata(content: string) {
     return listContentImageUrls(content).some((url) => {
         const metadata = parseImageMetadataFromUrl(url);

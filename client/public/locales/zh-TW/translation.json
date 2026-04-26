@@ -39,6 +39,15 @@
       "run": "開始補齊",
       "progress": "已處理 {{processed}} / {{total}}，更新 {{updated}} 篇，失敗 {{failed}} 篇。",
       "result": "Blurhash 補齊完成：共掃描 {{total}} 篇，成功更新 {{updated}} 篇，失敗 {{failed}} 篇。"
+    },
+    "external_images": {
+      "title": "遷移外連圖片",
+      "description": "掃描歷史文章中的外部圖片，下載後寫入物件儲存，並將正文連結替換為站點儲存地址。",
+      "eligible": "待處理 {{count}} 篇",
+      "note": "此任務會在服務端逐篇執行，並略過已指向本站或物件儲存的圖片。",
+      "run": "開始遷移",
+      "progress": "已處理 {{processed}} / {{total}}，更新 {{updated}} 篇，遷移 {{migrated}} 張，失敗 {{failed}} 張。",
+      "result": "外連圖片遷移完成：共掃描 {{total}} 篇，更新 {{updated}} 篇，遷移 {{migrated}} 張，失敗 {{failed}} 張。"
     }
   },
   "ai_summary": {

@@ -39,6 +39,15 @@
       "run": "補完を開始",
       "progress": "{{processed}} / {{total}} 件処理済み、更新 {{updated}} 件、失敗 {{failed}} 件。",
       "result": "Blurhash 補完が完了しました。全 {{total}} 件を走査し、{{updated}} 件を更新、{{failed}} 件が失敗しました。"
+    },
+    "external_images": {
+      "title": "外部画像を移行",
+      "description": "既存記事内の外部画像を走査し、オブジェクトストレージへ保存して、本文のリンクをストレージ URL に置き換えます。",
+      "eligible": "対象 {{count}} 件",
+      "note": "このタスクはサーバー側で記事ごとに実行され、このサイトまたはストレージ上の画像はスキップします。",
+      "run": "移行を開始",
+      "progress": "{{processed}} / {{total}} 件処理済み、更新 {{updated}} 件、移行 {{migrated}} 枚、失敗 {{failed}} 枚。",
+      "result": "外部画像の移行が完了しました。全 {{total}} 件を走査し、{{updated}} 件を更新、{{migrated}} 枚を移行、{{failed}} 枚が失敗しました。"
     }
   },
   "ai_summary": {

@@ -39,6 +39,15 @@
       "run": "开始补齐",
       "progress": "已处理 {{processed}} / {{total}}，更新 {{updated}} 篇，失败 {{failed}} 篇。",
       "result": "Blurhash 补齐完成：共扫描 {{total}} 篇，成功更新 {{updated}} 篇，失败 {{failed}} 篇。"
+    },
+    "external_images": {
+      "title": "迁移外联图片",
+      "description": "扫描历史帖子中的外部图片，下载后写入对象存储，并将正文链接替换为站点存储地址。",
+      "eligible": "待处理 {{count}} 篇",
+      "note": "该任务在服务端逐篇执行，会跳过已经指向本站或对象存储的图片。",
+      "run": "开始迁移",
+      "progress": "已处理 {{processed}} / {{total}}，更新 {{updated}} 篇，迁移 {{migrated}} 张，失败 {{failed}} 张。",
+      "result": "外联图片迁移完成：共扫描 {{total}} 篇，更新 {{updated}} 篇，迁移 {{migrated}} 张，失败 {{failed}} 张。"
     }
   },
   "ai_summary": {

@@ -39,6 +39,15 @@
       "run": "Start backfill",
       "progress": "Processed {{processed}} / {{total}}, updated {{updated}} posts, failed {{failed}} posts.",
       "result": "Blurhash backfill finished: scanned {{total}} posts, updated {{updated}}, failed {{failed}}."
+    },
+    "external_images": {
+      "title": "Migrate External Images",
+      "description": "Scan existing posts for external images, store them in object storage, and rewrite post content to local storage URLs.",
+      "eligible": "{{count}} posts pending",
+      "note": "This task runs on the server one post at a time and skips images already hosted by this site or storage.",
+      "run": "Start migration",
+      "progress": "Processed {{processed}} / {{total}}, updated {{updated}} posts, migrated {{migrated}} images, failed {{failed}} images.",
+      "result": "External image migration finished: scanned {{total}} posts, updated {{updated}}, migrated {{migrated}} images, failed {{failed}}."
     }
   },
   "ai_summary": {

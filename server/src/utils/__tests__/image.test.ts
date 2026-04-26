@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'bun:test';
-import { contentHasImagesMissingMetadata, extractImage, extractImageWithMetadata, listContentImageUrls, stripImageMetadataFromUrl } from '../image';
+import {
+    contentHasExternalImages,
+    contentHasImagesMissingMetadata,
+    extractImage,
+    extractImageWithMetadata,
+    listContentImageUrls,
+    stripImageMetadataFromUrl,
+} from '../image';
 
 describe('extractImage', () => {
     it('should extract image URL from markdown', () => {
@@ -80,5 +87,26 @@ describe('listContentImageUrls', () => {
             'https://example.com/markdown.png',
             'https://example.com/html.png',
         ]);
+    });
+});
+
+describe('contentHasExternalImages', () => {
+    it('should detect external http images', () => {
+        const content = '![img](https://remote.example.com/image.png)';
+        expect(contentHasExternalImages(content, {} as Env, 'https://site.example.com')).toBe(true);
+    });
+
+    it('should skip images hosted by the current site or storage host', () => {
+        const env = {
+            S3_ACCESS_HOST: 'https://images.example.com',
+            S3_ENDPOINT: 'https://bucket.r2.cloudflarestorage.com',
+        } as unknown as Env;
+        const content = [
+            '![local](https://site.example.com/api/blob/images/a.png)',
+            '![stored](https://images.example.com/images/b.png)',
+            '<img src="https://bucket.r2.cloudflarestorage.com/images/c.png">',
+        ].join('\n');
+
+        expect(contentHasExternalImages(content, env, 'https://site.example.com')).toBe(false);
     });
 });

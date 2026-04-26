@@ -17,12 +17,15 @@ export function CompatTasksPage() {
   const [status, setStatus] = useState<{
     aiSummary: { enabled: boolean; queueConfigured: boolean; eligible: number; forceEligible: number };
     blurhash: { eligible: number };
+    externalImages: { eligible: number };
   }>({
     aiSummary: { enabled: false, queueConfigured: false, eligible: 0, forceEligible: 0 },
     blurhash: { eligible: 0 },
+    externalImages: { eligible: 0 },
   });
-  const [runningTask, setRunningTask] = useState<"ai-summary" | "blurhash" | null>(null);
+  const [runningTask, setRunningTask] = useState<"ai-summary" | "blurhash" | "external-images" | null>(null);
   const [blurhashProgress, setBlurhashProgress] = useState({ total: 0, processed: 0, updated: 0, failed: 0 });
+  const [externalImageProgress, setExternalImageProgress] = useState({ total: 0, processed: 0, updated: 0, migrated: 0, failed: 0 });
   const { showAlert, AlertUI } = useAlert();
 
   const loadStatus = () => {
@@ -102,6 +105,50 @@ export function CompatTasksPage() {
       }
 
       showAlert(t("compat_tasks.blurhash.result", { updated, failed, total: items.length }));
+      loadStatus();
+    } finally {
+      setRunningTask(null);
+    }
+  };
+
+  const runExternalImageMigration = async () => {
+    setRunningTask("external-images");
+    setExternalImageProgress({ total: 0, processed: 0, updated: 0, migrated: 0, failed: 0 });
+
+    try {
+      const { data, error } = await client.config.getCompatExternalImageCandidates();
+      if (error) {
+        showAlert(error.value);
+        return;
+      }
+
+      const items = data?.items || [];
+      setExternalImageProgress({ total: items.length, processed: 0, updated: 0, migrated: 0, failed: 0 });
+
+      let processed = 0;
+      let updated = 0;
+      let migrated = 0;
+      let failed = 0;
+
+      for (const item of items) {
+        try {
+          const response = await client.config.applyCompatExternalImages(item.id);
+          if (response.error) {
+            failed += item.images || 1;
+          } else if (response.data) {
+            updated += response.data.updated ? 1 : 0;
+            migrated += response.data.migrated;
+            failed += response.data.failed;
+          }
+        } catch {
+          failed += item.images || 1;
+        } finally {
+          processed += 1;
+          setExternalImageProgress({ total: items.length, processed, updated, migrated, failed });
+        }
+      }
+
+      showAlert(t("compat_tasks.external_images.result", { updated, migrated, failed, total: items.length }));
       loadStatus();
     } finally {
       setRunningTask(null);
@@ -189,6 +236,39 @@ export function CompatTasksPage() {
                   title={runningTask === "blurhash" ? t("compat_tasks.running") : t("compat_tasks.blurhash.run")}
                   disabled={runningTask !== null || status.blurhash.eligible === 0}
                   onClick={runBlurhashBackfill}
+                />
+              </div>
+            </SettingsCardBody>
+          </SettingsCard>
+
+          <SettingsCard tone={status.externalImages.eligible > 0 ? "warning" : "success"}>
+            <SettingsCardHeader
+              title={t("compat_tasks.external_images.title")}
+              description={t("compat_tasks.external_images.description")}
+              badge={
+                <SettingsBadge tone={status.externalImages.eligible > 0 ? "warning" : "success"}>
+                  {t("compat_tasks.external_images.eligible", { count: status.externalImages.eligible })}
+                </SettingsBadge>
+              }
+            />
+            <SettingsCardBody>
+              <div className="space-y-3 text-sm text-neutral-600 dark:text-neutral-300">
+                <p>{t("compat_tasks.external_images.note")}</p>
+                {runningTask === "external-images" ? (
+                  <p>
+                    {t("compat_tasks.external_images.progress", {
+                      processed: externalImageProgress.processed,
+                      total: externalImageProgress.total,
+                      updated: externalImageProgress.updated,
+                      migrated: externalImageProgress.migrated,
+                      failed: externalImageProgress.failed,
+                    })}
+                  </p>
+                ) : null}
+                <Button
+                  title={runningTask === "external-images" ? t("compat_tasks.running") : t("compat_tasks.external_images.run")}
+                  disabled={runningTask !== null || status.externalImages.eligible === 0}
+                  onClick={runExternalImageMigration}
                 />
               </div>
             </SettingsCardBody>

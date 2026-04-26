@@ -19,7 +19,9 @@ import { profileAsync } from "../core/server-timing";
 import {
     applyBlurhashCompatUpdate,
     buildCompatTasksResponse,
+    listExternalImageCompatCandidates,
     listBlurhashCompatCandidates,
+    migrateExternalImagesForFeed,
     runCompatAISummaryBackfill,
 } from "./config-compat-tasks";
 
@@ -191,7 +193,7 @@ export function ConfigService(): Hono {
             return c.text('Unauthorized', 401);
         }
 
-        return c.json(await wrapTime(c, 'compat_tasks', buildCompatTasksResponse(c.get('db'), c.get('serverConfig'), c.get('env'))));
+        return c.json(await wrapTime(c, 'compat_tasks', buildCompatTasksResponse(c.get('db'), c.get('serverConfig'), c.get('env'), new URL(c.req.url).origin)));
     });
 
     app.post('/compat-tasks/ai-summary', async (c: AppContext) => {
@@ -241,6 +243,37 @@ export function ConfigService(): Hono {
 
         try {
             return c.json(await wrapTime(c, 'compat_blurhash_apply', applyBlurhashCompatUpdate(c.get('db'), c.get('cache'), id, body.content)));
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            const status = message === 'Feed not found' ? 404 : 400;
+            return c.text(message, status);
+        }
+    });
+
+    app.get('/compat-tasks/external-images', async (c: AppContext) => {
+        const admin = c.get('admin');
+
+        if (!admin) {
+            return c.text('Unauthorized', 401);
+        }
+
+        return c.json(await wrapTime(c, 'compat_external_images_list', listExternalImageCompatCandidates(c.get('db'), c.get('env'), new URL(c.req.url).origin)));
+    });
+
+    app.post('/compat-tasks/external-images/:id', async (c: AppContext) => {
+        const admin = c.get('admin');
+
+        if (!admin) {
+            return c.text('Unauthorized', 401);
+        }
+
+        const id = Number(c.req.param('id'));
+        if (!Number.isInteger(id) || id <= 0) {
+            return c.text('Invalid feed id', 400);
+        }
+
+        try {
+            return c.json(await wrapTime(c, 'compat_external_images_apply', migrateExternalImagesForFeed(c.get('db'), c.get('cache'), c.get('env'), id, new URL(c.req.url).origin)));
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             const status = message === 'Feed not found' ? 404 : 400;

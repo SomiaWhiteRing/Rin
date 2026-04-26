@@ -103,6 +103,9 @@ export interface CompatTasksResponse {
   blurhash: {
     eligible: number;
   };
+  externalImages: {
+    eligible: number;
+  };
 }
 
 export interface CompatAISummaryActionResponse {
@@ -124,6 +127,23 @@ export interface CompatBlurhashCandidatesResponse {
 
 export interface CompatBlurhashApplyResponse {
   updated: boolean;
+}
+
+export interface CompatExternalImageCandidate {
+  id: number;
+  title: string | null;
+  images: number;
+}
+
+export interface CompatExternalImageCandidatesResponse {
+  generatedAt: string;
+  items: CompatExternalImageCandidate[];
+}
+
+export interface CompatExternalImageApplyResponse {
+  updated: boolean;
+  migrated: number;
+  failed: number;
 }
 
 // Re-export for external use
@@ -505,6 +525,14 @@ class ConfigAPI {
 
   async applyCompatBlurhash(feedId: number, content: string): Promise<ApiResponse<CompatBlurhashApplyResponse>> {
     return this.http.post<CompatBlurhashApplyResponse>(`/api/config/compat-tasks/blurhash/${feedId}`, { content });
+  }
+
+  async getCompatExternalImageCandidates(): Promise<ApiResponse<CompatExternalImageCandidatesResponse>> {
+    return this.http.get<CompatExternalImageCandidatesResponse>("/api/config/compat-tasks/external-images");
+  }
+
+  async applyCompatExternalImages(feedId: number): Promise<ApiResponse<CompatExternalImageApplyResponse>> {
+    return this.http.post<CompatExternalImageApplyResponse>(`/api/config/compat-tasks/external-images/${feedId}`);
   }
 
   async retryQueueTask(feedId: number): Promise<ApiResponse<QueueTaskActionResponse>> {

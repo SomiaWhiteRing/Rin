@@ -259,10 +259,93 @@ describe("ConfigService", () => {
             const data = await res.json() as {
                 aiSummary: { eligible: number; forceEligible: number };
                 blurhash: { eligible: number };
+                externalImages: { eligible: number };
             };
             expect(data.aiSummary.eligible).toBe(1);
             expect(data.aiSummary.forceEligible).toBe(2);
             expect(data.blurhash.eligible).toBe(1);
+            expect(data.externalImages.eligible).toBe(1);
+        });
+
+        it("should list external image migration candidates", async () => {
+            sqlite.exec(`
+                INSERT INTO feeds (id, title, summary, ai_summary, ai_summary_status, ai_summary_error, content, listed, draft, top, uid)
+                VALUES
+                  (1, 'Remote Image', '', '', 'idle', '', '![img](https://remote.example.com/a.png)', 1, 0, 0, 1),
+                  (2, 'Stored Image', '', '', 'idle', '', '![img](https://test-image-domain.com/images/a.png)', 1, 0, 0, 1)
+            `);
+
+            const res = await app.request("/compat-tasks/external-images", {
+                method: "GET",
+                headers: {
+                    Authorization: "Bearer mock_token_1",
+                },
+            });
+
+            expect(res.status).toBe(200);
+            const data = await res.json() as { items: Array<{ id: number; title: string | null; images: number }> };
+            expect(data.items).toEqual([{ id: 1, title: 'Remote Image', images: 1 }]);
+        });
+
+        it("should migrate external images to R2 storage and rewrite feed content", async () => {
+            const putCalls: Array<{ key: string; type: string | undefined; body: string }> = [];
+            env.R2_BUCKET = {
+                put: async (key: string, value: any, options?: R2PutOptions) => {
+                    putCalls.push({
+                        key,
+                        type: options?.httpMetadata && 'contentType' in options.httpMetadata
+                            ? options.httpMetadata.contentType
+                            : undefined,
+                        body: new TextDecoder().decode(value),
+                    });
+                    return {
+                        key,
+                        version: '1',
+                        size: value.byteLength || 0,
+                        etag: 'etag',
+                        httpEtag: 'etag',
+                        uploaded: new Date(),
+                        storageClass: 'Standard',
+                        checksums: {} as R2Checksums,
+                        writeHttpMetadata: () => {},
+                    } as unknown as R2Object;
+                },
+            } as unknown as R2Bucket;
+
+            globalThis.fetch = mock(async (url: RequestInfo | URL) => {
+                expect(String(url)).toBe("https://remote.example.com/a.png");
+                return new Response("image-bytes", {
+                    status: 200,
+                    headers: {
+                        "Content-Type": "image/png",
+                    },
+                });
+            }) as unknown as typeof fetch;
+
+            sqlite.exec(`
+                INSERT INTO feeds (id, title, summary, ai_summary, ai_summary_status, ai_summary_error, content, listed, draft, top, uid)
+                VALUES (1, 'Remote Image', '', 'summary', 'completed', '', '![img](https://remote.example.com/a.png#blurhash=test&width=10&height=5)', 1, 0, 0, 1)
+            `);
+
+            const res = await app.request("/compat-tasks/external-images/1", {
+                method: "POST",
+                headers: {
+                    Authorization: "Bearer mock_token_1",
+                },
+            });
+
+            expect(res.status).toBe(200);
+            const data = await res.json() as { updated: boolean; migrated: number; failed: number };
+            expect(data).toEqual({ updated: true, migrated: 1, failed: 0 });
+            expect(putCalls).toHaveLength(1);
+            expect(putCalls[0]?.key).toMatch(/^images\/[a-f0-9]+\.png$/);
+            expect(putCalls[0]?.type).toBe("image/png");
+            expect(putCalls[0]?.body).toBe("image-bytes");
+
+            const row = sqlite.prepare("SELECT content, ai_summary, ai_summary_status FROM feeds WHERE id = 1").get() as any;
+            expect(row.content).toMatch(/^!\[img\]\(https:\/\/test-image-domain\.com\/images\/[a-f0-9]+\.png#blurhash=test&width=10&height=5\)$/);
+            expect(row.ai_summary).toBe("summary");
+            expect(row.ai_summary_status).toBe("completed");
         });
 
         it("should queue AI summary backfill for eligible feeds", async () => {
