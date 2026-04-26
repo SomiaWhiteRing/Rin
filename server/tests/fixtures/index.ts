@@ -97,13 +97,13 @@ export function createMockDB() {
             desc TEXT,
             avatar TEXT NOT NULL,
             url TEXT NOT NULL,
-            uid INTEGER NOT NULL,
+            uid INTEGER,
             accepted INTEGER DEFAULT 0 NOT NULL,
             health TEXT DEFAULT '' NOT NULL,
             sort_order INTEGER DEFAULT 0 NOT NULL,
             created_at INTEGER DEFAULT (unixepoch()),
             updated_at INTEGER DEFAULT (unixepoch()),
-            FOREIGN KEY (uid) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (uid) REFERENCES users(id) ON DELETE SET NULL
         );
 
         -- Comments table

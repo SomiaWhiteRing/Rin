@@ -196,7 +196,7 @@ export interface Friend {
   accepted: number;
   sort_order: number | null;
   createdAt: string;
-  uid: number;
+  uid: number | null;
   updatedAt: string;
   health: string;
 }

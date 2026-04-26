@@ -54,7 +54,7 @@ export const friends = sqliteTable("friends", {
     desc: text("desc"),
     avatar: text("avatar").notNull(),
     url: text("url").notNull(),
-    uid: integer("uid").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    uid: integer("uid").references(() => users.id, { onDelete: 'set null' }),
     accepted: integer("accepted").default(0).notNull(),
     health: text("health").default("").notNull(),
     sort_order: integer("sort_order").default(0).notNull(),

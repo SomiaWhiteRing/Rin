@@ -18,7 +18,7 @@ import { siteName } from "../utils/constants";
 type FriendItem = {
     name: string;
     id: number;
-    uid: number;
+    uid: number | null;
     avatar: string;
     createdAt: Date;
     updatedAt: Date;
@@ -50,7 +50,7 @@ export function FriendsPage() {
     const { t } = useTranslation()
     const siteConfig = useSiteConfig();
     const config = useContext(ClientConfigContext)
-    let [apply] = useState<FriendItem>()
+    const [apply, setApply] = useState<FriendItem | null>(null)
     const [name, setName] = useState("")
     const [desc, setDesc] = useState("")
     const [avatar, setAvatar] = useState("")
@@ -60,6 +60,7 @@ export function FriendsPage() {
     const [waitList, setWaitList] = useState<FriendItem[]>([])
     const [refusedList, setRefusedList] = useState<FriendItem[]>([])
     const [friendsUnavailable, setFriendsUnavailable] = useState<FriendItem[]>([])
+    const canCreateOrApply = Boolean(profile?.permission || config.getBoolean("friend_apply_enable"))
     const [status, setStatus] = useState<'idle' | 'loading'>('loading')
     const ref = useRef(false)
     const { showAlert, AlertUI } = useAlert()
@@ -76,6 +77,7 @@ export function FriendsPage() {
                 setWaitList(waitList as any)
                 const refuesdList = friend_list.filter(({ accepted }: any) => accepted === -1) || []
                 setRefusedList(refuesdList as any)
+                setApply(data.apply_list as FriendItem | null)
             }
             setStatus('idle')
         })
@@ -99,12 +101,12 @@ export function FriendsPage() {
                 <FriendList title={t('friends.left')} show={friendsUnavailable.length > 0} friends={friendsUnavailable} />
                 <FriendList title={t('friends.review.waiting')} show={waitList.length > 0} friends={waitList} />
                 <FriendList title={t('friends.review.rejected')} show={refusedList.length > 0} friends={refusedList} />
-                <FriendList title={t('friends.my_apply')} show={profile?.permission !== true && apply !== undefined} friends={apply ? [apply] : []} />
-                {profile && (profile.permission || config.get("friend_apply_enable")) &&
+                <FriendList title={t('friends.my_apply')} show={profile?.permission !== true && Boolean(apply) && apply?.accepted !== 1} friends={apply ? [apply] : []} />
+                {canCreateOrApply &&
                     <div className="wauto t-primary flex text-start text-2xl font-bold mt-8">
                         <FlatPanel className="md:basis-1/2 p-6">
                             <p>
-                                {profile.permission ? t('friends.create') : t('friends.apply')}
+                                {profile?.permission ? t('friends.create') : t('friends.apply')}
                             </p>
                             <div className="text-sm mt-4 text-neutral-500 font-normal">
                                 <Input value={name} setValue={setName} placeholder={t('sitename')} variant="flat" />

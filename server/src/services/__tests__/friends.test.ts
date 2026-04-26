@@ -81,7 +81,7 @@ describe('FriendService', () => {
     });
 
     describe('POST / - Create friend', () => {
-        it('should require authentication', async () => {
+        it('should allow anonymous users to apply for review', async () => {
             const res = await app.request('/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -93,7 +93,11 @@ describe('FriendService', () => {
                 }),
             }, env);
 
-            expect(res.status).toBe(401);
+            expect(res.status).toBe(200);
+            const friend = sqlite.prepare('SELECT * FROM friends WHERE name = ?').get('New Friend') as any;
+            expect(friend).not.toBeNull();
+            expect(friend.uid).toBeNull();
+            expect(friend.accepted).toBe(0);
         });
 
         it('should allow admin to create friend directly', async () => {
