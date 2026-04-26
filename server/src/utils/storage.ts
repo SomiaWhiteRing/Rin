@@ -1,5 +1,5 @@
 import { path_join } from "./path";
-import { buildS3ObjectUrl, createS3Client, putObject as putS3Object } from "./s3";
+import { buildS3ListUrl, buildS3ObjectUrl, createS3Client, deleteObject as deleteS3Object, putObject as putS3Object } from "./s3";
 
 type StorageTarget =
   | {
@@ -185,4 +185,105 @@ export async function putStorageObjectAtKey(
     key: storageKey,
     url: getStoragePublicUrl(env, storageKey, baseUrl),
   };
+}
+
+export type StorageObjectInfo = {
+  key: string;
+  size: number;
+  uploaded?: Date;
+  contentType?: string;
+};
+
+export async function deleteStorageObject(env: Env, storageKey: string) {
+  if (env.R2_BUCKET) {
+    await env.R2_BUCKET.delete(storageKey);
+    return;
+  }
+
+  const client = createS3Client(env);
+  await deleteS3Object(client, env, storageKey);
+}
+
+function parseS3Text(value: any) {
+  if (Array.isArray(value)) {
+    return parseS3Text(value[0]);
+  }
+  if (value === undefined || value === null) {
+    return "";
+  }
+  return String(value);
+}
+
+async function listS3StorageObjects(env: Env, prefix: string): Promise<StorageObjectInfo[]> {
+  const { XMLParser } = await import("fast-xml-parser");
+  const client = createS3Client(env);
+  const parser = new XMLParser({ ignoreAttributes: false });
+  const items: StorageObjectInfo[] = [];
+  let continuationToken: string | undefined;
+
+  do {
+    const response = await client.fetch(buildS3ListUrl(env, prefix, continuationToken), {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to list S3 objects: ${response.status} ${response.statusText}`);
+    }
+
+    const parsed = parser.parse(await response.text()) as any;
+    const result = parsed.ListBucketResult || {};
+    const contents = Array.isArray(result.Contents)
+      ? result.Contents
+      : result.Contents
+        ? [result.Contents]
+        : [];
+
+    for (const object of contents) {
+      const key = parseS3Text(object.Key);
+      if (!key) {
+        continue;
+      }
+
+      const head = await headStorageObject(env, key);
+      items.push({
+        key,
+        size: Number.parseInt(parseS3Text(object.Size), 10) || Number(head?.headers.get("Content-Length") || 0),
+        uploaded: parseS3Text(object.LastModified) ? new Date(parseS3Text(object.LastModified)) : undefined,
+        contentType: head?.headers.get("Content-Type") || undefined,
+      });
+    }
+
+    const truncated = parseS3Text(result.IsTruncated) === "true";
+    continuationToken = truncated ? parseS3Text(result.NextContinuationToken) : undefined;
+  } while (continuationToken);
+
+  return items;
+}
+
+export async function listStorageObjects(env: Env, prefix = env.S3_FOLDER || ""): Promise<StorageObjectInfo[]> {
+  if (env.R2_BUCKET) {
+    const items: StorageObjectInfo[] = [];
+    let cursor: string | undefined;
+
+    do {
+      const result = await env.R2_BUCKET.list({ prefix, cursor });
+      for (const object of result.objects) {
+        const head = typeof (env.R2_BUCKET as any).head === "function"
+          ? await env.R2_BUCKET.head(object.key)
+          : undefined;
+        const contentType = (head as any)?.httpMetadata?.contentType;
+        items.push({
+          key: object.key,
+          size: object.size,
+          uploaded: object.uploaded,
+          contentType,
+        });
+      }
+      cursor = result.truncated ? result.cursor : undefined;
+    } while (cursor);
+
+    return items;
+  }
+
+  return listS3StorageObjects(env, prefix);
 }

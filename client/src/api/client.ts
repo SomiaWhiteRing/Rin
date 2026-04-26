@@ -106,6 +106,10 @@ export interface CompatTasksResponse {
   externalImages: {
     eligible: number;
   };
+  imageAssets: {
+    indexed: number;
+    storageScope: string;
+  };
 }
 
 export interface CompatAISummaryActionResponse {
@@ -144,6 +148,66 @@ export interface CompatExternalImageApplyResponse {
   updated: boolean;
   migrated: number;
   failed: number;
+}
+
+export interface CompatImageAssetsApplyResponse {
+  articleImages: number;
+  storageImages: number;
+  externalImages: number;
+  unused: number;
+  failed: number;
+}
+
+export interface ImageAssetUsage {
+  id: number;
+  title: string | null;
+}
+
+export interface ImageAsset {
+  id: number;
+  url: string;
+  storageKey: string | null;
+  source: "upload" | "article" | "storage" | "external";
+  filename: string;
+  note: string;
+  contentType: string;
+  size: number;
+  width: number | null;
+  height: number | null;
+  blurhash: string;
+  compressionStatus: "idle" | "pending" | "processing" | "completed" | "failed" | "skipped";
+  compressionError: string;
+  originalSize: number | null;
+  compressedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  usageCount: number;
+  usages: ImageAssetUsage[];
+}
+
+export interface ImageListResponse {
+  size: number;
+  data: ImageAsset[];
+  hasNext: boolean;
+}
+
+export interface ImageStatsResponse {
+  total: number;
+  used: number;
+  unused: number;
+  totalSize: number;
+  compressible: number;
+}
+
+export interface BulkDeleteImagesResponse {
+  deleted: number;
+  skipped: number;
+  items: Array<{ id: number; status: "deleted" | "skipped"; reason?: string }>;
+}
+
+export interface BulkCompressImagesResponse {
+  queued: number;
+  skipped: number;
 }
 
 // Re-export for external use
@@ -535,6 +599,10 @@ class ConfigAPI {
     return this.http.post<CompatExternalImageApplyResponse>(`/api/config/compat-tasks/external-images/${feedId}`);
   }
 
+  async runCompatImageAssets(): Promise<ApiResponse<CompatImageAssetsApplyResponse>> {
+    return this.http.post<CompatImageAssetsApplyResponse>("/api/config/compat-tasks/image-assets");
+  }
+
   async retryQueueTask(feedId: number): Promise<ApiResponse<QueueTaskActionResponse>> {
     return this.http.post<QueueTaskActionResponse>(`/api/config/queue-status/${feedId}/retry`);
   }
@@ -599,6 +667,54 @@ class StorageAPI {
     if (key) formData.append("key", key);
     
     return this.http.post<UploadResponse>("/api/storage", formData);
+  }
+}
+
+/**
+ * Image asset management API methods
+ */
+class ImagesAPI {
+  constructor(private http: HttpClient) {}
+
+  async list(params?: {
+    page?: number;
+    limit?: number;
+    keyword?: string;
+    usage?: "all" | "used" | "unused";
+    feedId?: number;
+    contentType?: string;
+    compressionStatus?: string;
+  }): Promise<ApiResponse<ImageListResponse>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set("page", String(params.page));
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.keyword) searchParams.set("keyword", params.keyword);
+    if (params?.usage && params.usage !== "all") searchParams.set("usage", params.usage);
+    if (params?.feedId) searchParams.set("feedId", String(params.feedId));
+    if (params?.contentType) searchParams.set("contentType", params.contentType);
+    if (params?.compressionStatus) searchParams.set("compressionStatus", params.compressionStatus);
+    const query = searchParams.toString();
+    return this.http.get<ImageListResponse>(`/api/images${query ? `?${query}` : ""}`);
+  }
+
+  async stats(): Promise<ApiResponse<ImageStatsResponse>> {
+    return this.http.get<ImageStatsResponse>("/api/images/stats");
+  }
+
+  async update(id: number, body: { filename?: string; note?: string }): Promise<ApiResponse<{ success: boolean }>> {
+    return this.http.patch<{ success: boolean }>(`/api/images/${id}`, body);
+  }
+
+  async delete(id: number): Promise<ApiResponse<{ success: boolean }>> {
+    return this.http.delete<{ success: boolean }>(`/api/images/${id}`);
+  }
+
+  async bulkDelete(ids: number[]): Promise<ApiResponse<BulkDeleteImagesResponse>> {
+    return this.http.post<BulkDeleteImagesResponse>("/api/images/bulk-delete", { ids });
+  }
+
+  async bulkCompress(ids: number[]): Promise<ApiResponse<BulkCompressImagesResponse>> {
+    return this.http.post<BulkCompressImagesResponse>("/api/images/bulk-compress", { ids });
   }
 }
 
@@ -688,6 +804,7 @@ export class ApiClient {
   config: ConfigAPI;
   aiConfig: AIConfigAPI;
   storage: StorageAPI;
+  images: ImagesAPI;
   search: SearchAPI;
   auth: AuthAPI;
   wp: WordPressAPI;
@@ -704,6 +821,7 @@ export class ApiClient {
     this.config = new ConfigAPI(this.http);
     this.aiConfig = new AIConfigAPI(this.http);
     this.storage = new StorageAPI(this.http);
+    this.images = new ImagesAPI(this.http);
     this.search = new SearchAPI(this.http);
     this.auth = new AuthAPI(this.http);
     this.wp = new WordPressAPI(this.http);

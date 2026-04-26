@@ -1,8 +1,9 @@
 import { drizzle } from "drizzle-orm/d1";
 import { CacheImpl } from "../utils/cache";
-import { isQueueTask, FEED_AI_SUMMARY_TASK } from "../queue";
+import { isQueueTask, FEED_AI_SUMMARY_TASK, IMAGE_COMPRESSION_TASK } from "../queue";
 import { processFeedAISummaryTask } from "../services/feed-ai-summary";
 import { clearFeedCache } from "../services/feed";
+import { processImageCompressionTask } from "../services/images";
 
 export async function handleQueue(
   batch: MessageBatch<unknown>,
@@ -31,6 +32,15 @@ export async function handleQueue(
           serverConfig,
           body.payload,
           clearFeedCache,
+        );
+        message.ack();
+        break;
+      case IMAGE_COMPRESSION_TASK:
+        await processImageCompressionTask(
+          env,
+          db,
+          serverConfig,
+          body.payload.imageId,
         );
         message.ack();
         break;

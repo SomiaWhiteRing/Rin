@@ -7,6 +7,7 @@
     "back_to_site": "Back to site",
     "compat_tasks_description": "Run compatibility jobs in bulk to backfill missing AI summaries and image blurhash metadata for older posts.",
     "health_description": "Review required configuration, missing integrations, and risks that can affect runtime behavior.",
+    "images_description": "Manage article image assets, storage usage, unused image cleanup, and compression tasks.",
     "queue_status_description": "Inspect AI summary queue progress, recent task results, and failures.",
     "settings_description": "Manage site behavior, integrations, and publishing rules in one place.",
     "title": "Admin",
@@ -48,6 +49,14 @@
       "run": "Start migration",
       "progress": "Processed {{processed}} / {{total}}, updated {{updated}} posts, migrated {{migrated}} images, failed {{failed}} images.",
       "result": "External image migration finished: scanned {{total}} posts, updated {{updated}}, migrated {{migrated}} images, failed {{failed}}."
+    },
+    "image_assets": {
+      "title": "Build Image Asset Index",
+      "description": "Scan historical article images and object storage images to build manageable image assets and article usage records.",
+      "indexed": "{{count}} indexed",
+      "note": "Object storage scan scope: {{scope}}",
+      "run": "Build index",
+      "result": "Image asset index finished: article images {{article}}, storage images {{storage}}, external images {{external}}, unused {{unused}}, failed {{failed}}."
     }
   },
   "ai_summary": {
@@ -178,6 +187,73 @@
       "title": "Index is empty"
     },
     "title": "Index"
+  },
+  "images": {
+    "bulk_compress": {
+      "confirm": "Queue the selected {{count}} images for TinyPNG compression?",
+      "result": "Queued {{queued}} images and skipped {{skipped}}.",
+      "title": "Bulk Compress"
+    },
+    "bulk_delete": {
+      "confirm": "Delete the selected {{count}} unused images? Used and external images will be skipped.",
+      "result": "Deleted {{deleted}} images and skipped {{skipped}}.",
+      "title": "Bulk Delete"
+    },
+    "compression": {
+      "completed": "Compressed",
+      "failed": "Failed",
+      "idle": "Not compressed",
+      "pending": "Queued",
+      "processing": "Compressing",
+      "skipped": "Skipped"
+    },
+    "delete": {
+      "confirm": "Delete image {{name}}?",
+      "title": "Delete Image"
+    },
+    "details": {
+      "filename": "Filename",
+      "no_usages": "No articles currently reference this image.",
+      "note": "Note",
+      "open": "Details",
+      "saved": "Image details saved",
+      "title": "Image Details",
+      "usages": "Referenced by"
+    },
+    "empty": {
+      "description": "No images match the current filters.",
+      "title": "No images"
+    },
+    "filter": {
+      "all": "All images",
+      "all_articles": "All articles",
+      "unused": "Unused",
+      "used": "Used"
+    },
+    "loading": "Loading image assets...",
+    "search": "Search filename or URL",
+    "selected$count_one": "{{count}} selected",
+    "selected$count_other": "{{count}} selected",
+    "source": {
+      "article": "Article",
+      "external": "External",
+      "storage": "Storage",
+      "upload": "Upload"
+    },
+    "stats": {
+      "compressible": "Compressible",
+      "total": "Total images",
+      "total_size": "Total size",
+      "unused": "Unused"
+    },
+    "title": "Image Management",
+    "unused": "Unused",
+    "used$count_one": "Used by {{count}} article",
+    "used$count_other": "Used by {{count}} articles",
+    "view": {
+      "grid": "Thumbnail view",
+      "list": "List view"
+    }
   },
   "listed": "Listed in articles",
   "load_more": "Load More",

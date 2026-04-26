@@ -120,6 +120,40 @@ export function createMockDB() {
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
         );
 
+        -- Image assets table
+        CREATE TABLE IF NOT EXISTS image_assets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL UNIQUE,
+            storage_key TEXT UNIQUE,
+            source TEXT DEFAULT 'article' NOT NULL,
+            filename TEXT DEFAULT '' NOT NULL,
+            note TEXT DEFAULT '' NOT NULL,
+            content_type TEXT DEFAULT '' NOT NULL,
+            size INTEGER DEFAULT 0 NOT NULL,
+            width INTEGER,
+            height INTEGER,
+            blurhash TEXT DEFAULT '' NOT NULL,
+            compression_status TEXT DEFAULT 'idle' NOT NULL,
+            compression_error TEXT DEFAULT '' NOT NULL,
+            original_size INTEGER,
+            compressed_at INTEGER,
+            created_at INTEGER DEFAULT (unixepoch()),
+            updated_at INTEGER DEFAULT (unixepoch())
+        );
+
+        -- Image usage table
+        CREATE TABLE IF NOT EXISTS image_usages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            asset_id INTEGER NOT NULL,
+            feed_id INTEGER NOT NULL,
+            raw_url TEXT NOT NULL,
+            created_at INTEGER DEFAULT (unixepoch()),
+            updated_at INTEGER DEFAULT (unixepoch()),
+            UNIQUE(asset_id, feed_id),
+            FOREIGN KEY (asset_id) REFERENCES image_assets(id) ON DELETE CASCADE,
+            FOREIGN KEY (feed_id) REFERENCES feeds(id) ON DELETE CASCADE
+        );
+
         -- Hashtags table (note: named "hashtags" not "tags")
         CREATE TABLE IF NOT EXISTS hashtags (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

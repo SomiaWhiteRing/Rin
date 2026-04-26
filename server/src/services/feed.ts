@@ -6,6 +6,7 @@ import { feeds, visits, visitStats } from "../db/schema";
 import { HyperLogLog } from "../utils/hyperloglog";
 import { extractImageWithMetadata } from "../utils/image";
 import { syncFeedAISummaryQueueState } from "./feed-ai-summary";
+import { removeFeedImageUsages, syncFeedImageUsages } from "./images";
 import { bindTagToPost } from "./tag";
 import { clearFeedCache } from "./clear-feed-cache";
 export { clearFeedCache } from "./clear-feed-cache";
@@ -172,6 +173,7 @@ export function FeedService(): Hono<{
         }).returning({ insertedId: feeds.id }));
 
         await profileAsync(c, 'feed_create_tags', () => bindTagToPost(db, result[0].insertedId, tags));
+        await profileAsync(c, 'feed_create_image_usages', () => syncFeedImageUsages(db, env, result[0].insertedId, content, new URL(c.req.url).origin));
         await profileAsync(c, 'feed_create_ai_queue', () => syncFeedAISummaryQueueState(db, serverConfig, env, result[0].insertedId, {
             draft: Boolean(draft),
             updatedAt: date,
@@ -412,6 +414,10 @@ export function FeedService(): Hono<{
             await profileAsync(c, 'feed_update_tags', () => bindTagToPost(db, id_num, tags));
         }
 
+        if (content !== undefined) {
+            await profileAsync(c, 'feed_update_image_usages', () => syncFeedImageUsages(db, env, id_num, content, new URL(c.req.url).origin));
+        }
+
         if (shouldQueueAISummary || isDraft) {
             await profileAsync(c, 'feed_update_ai_queue', () => syncFeedAISummaryQueueState(db, serverConfig, env, id_num, {
                 draft: Boolean(isDraft),
@@ -469,6 +475,7 @@ export function FeedService(): Hono<{
             return c.text('Permission denied', 403);
         }
 
+        await profileAsync(c, 'feed_delete_image_usages', () => removeFeedImageUsages(db, id_num));
         await profileAsync(c, 'feed_delete_db', () => db.delete(feeds).where(eq(feeds.id, id_num)));
         await profileAsync(c, 'feed_delete_cache_invalidate', () => clearFeedCache(cache, id_num, feed.alias, null));
         return c.text('Deleted');

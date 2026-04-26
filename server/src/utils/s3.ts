@@ -63,3 +63,35 @@ export function buildS3ObjectUrl(env: Env, key: string): string {
     const urlObj = new URL(endpoint);
     return `${urlObj.protocol}//${bucket}.${urlObj.host}/${key}`;
 }
+
+export async function deleteObject(client: AwsClient, env: Env, key: string) {
+    const response = await client.fetch(buildS3ObjectUrl(env, key), {
+        method: "DELETE",
+    });
+
+    if (!response.ok && response.status !== 404) {
+        throw new Error(`Failed to delete S3 object: ${response.status} ${response.statusText}`);
+    }
+
+    return response;
+}
+
+export function buildS3ListUrl(env: Env, prefix?: string, continuationToken?: string): string {
+    const endpoint = env.S3_ENDPOINT;
+    const bucket = env.S3_BUCKET;
+    const forcePathStyle = env.S3_FORCE_PATH_STYLE === "true";
+    const baseUrl = forcePathStyle
+        ? path_join(endpoint, bucket)
+        : `${new URL(endpoint).protocol}//${bucket}.${new URL(endpoint).host}`;
+    const url = new URL(baseUrl);
+
+    url.searchParams.set("list-type", "2");
+    if (prefix) {
+        url.searchParams.set("prefix", prefix);
+    }
+    if (continuationToken) {
+        url.searchParams.set("continuation-token", continuationToken);
+    }
+
+    return url.toString();
+}

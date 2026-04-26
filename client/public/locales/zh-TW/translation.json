@@ -7,6 +7,7 @@
     "back_to_site": "返回站點",
     "compat_tasks_description": "批次觸發向前相容任務，用於補齊歷史文章缺失的 AI 摘要與圖片 blurhash 中繼資料。",
     "health_description": "檢查關鍵配置、缺失的整合項，以及可能影響服務正常運行的風險。",
+    "images_description": "管理文章圖片資產、儲存占用、未使用圖片清理與壓縮任務。",
     "queue_status_description": "查看 AI 摘要佇列進度、最近任務結果與失敗資訊。",
     "settings_description": "在統一的後台空間中管理站點行為、整合配置與發佈規則。",
     "title": "後台管理",
@@ -48,6 +49,14 @@
       "run": "開始遷移",
       "progress": "已處理 {{processed}} / {{total}}，更新 {{updated}} 篇，遷移 {{migrated}} 張，失敗 {{failed}} 張。",
       "result": "外連圖片遷移完成：共掃描 {{total}} 篇，更新 {{updated}} 篇，遷移 {{migrated}} 張，失敗 {{failed}} 張。"
+    },
+    "image_assets": {
+      "title": "建立圖片資產索引",
+      "description": "掃描歷史文章圖片與物件儲存圖片，建立可管理的圖片資產與文章引用關係。",
+      "indexed": "已索引 {{count}} 張",
+      "note": "物件儲存掃描範圍：{{scope}}",
+      "run": "開始建立索引",
+      "result": "圖片資產索引完成：文章圖片 {{article}} 張，儲存圖片 {{storage}} 張，外連圖片 {{external}} 張，未使用 {{unused}} 張，失敗 {{failed}} 項。"
     }
   },
   "ai_summary": {
@@ -178,6 +187,73 @@
       "title": "目錄為空"
     },
     "title": "目錄"
+  },
+  "images": {
+    "bulk_compress": {
+      "confirm": "確定將選取的 {{count}} 張圖片加入 TinyPNG 壓縮佇列嗎？",
+      "result": "已入列 {{queued}} 張，略過 {{skipped}} 張。",
+      "title": "批次壓縮"
+    },
+    "bulk_delete": {
+      "confirm": "確定刪除選取的 {{count}} 張未使用圖片嗎？已使用或外連圖片會被略過。",
+      "result": "已刪除 {{deleted}} 張，略過 {{skipped}} 張。",
+      "title": "批次刪除"
+    },
+    "compression": {
+      "completed": "已壓縮",
+      "failed": "失敗",
+      "idle": "未壓縮",
+      "pending": "排隊中",
+      "processing": "壓縮中",
+      "skipped": "已略過"
+    },
+    "delete": {
+      "confirm": "確定刪除圖片 {{name}} 嗎？",
+      "title": "刪除圖片"
+    },
+    "details": {
+      "filename": "檔案名稱",
+      "no_usages": "目前沒有文章引用這張圖片。",
+      "note": "備註",
+      "open": "詳情",
+      "saved": "圖片資訊已儲存",
+      "title": "圖片詳情",
+      "usages": "引用文章"
+    },
+    "empty": {
+      "description": "目前篩選條件下沒有圖片。",
+      "title": "暫無圖片"
+    },
+    "filter": {
+      "all": "全部圖片",
+      "all_articles": "全部文章",
+      "unused": "未使用",
+      "used": "已使用"
+    },
+    "loading": "正在載入圖片資產...",
+    "search": "搜尋檔案名稱或 URL",
+    "selected$count_one": "已選取 {{count}} 張",
+    "selected$count_other": "已選取 {{count}} 張",
+    "source": {
+      "article": "文章",
+      "external": "外連",
+      "storage": "儲存",
+      "upload": "上傳"
+    },
+    "stats": {
+      "compressible": "可壓縮",
+      "total": "圖片總數",
+      "total_size": "總占用",
+      "unused": "未使用"
+    },
+    "title": "圖片管理",
+    "unused": "未使用",
+    "used$count_one": "被 {{count}} 篇文章使用",
+    "used$count_other": "被 {{count}} 篇文章使用",
+    "view": {
+      "grid": "縮圖視圖",
+      "list": "列表視圖"
+    }
   },
   "listed": "列出在文章中",
   "load_more": "載入更多",

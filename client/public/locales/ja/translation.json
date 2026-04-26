@@ -7,6 +7,7 @@
     "back_to_site": "サイトに戻る",
     "compat_tasks_description": "過去記事向けの AI 要約と画像 blurhash メタデータを一括補完する互換タスクを実行します。",
     "health_description": "必須設定、未構成の連携、動作に影響するリスクを確認します。",
+    "images_description": "記事画像アセット、ストレージ使用量、未使用画像の削除、圧縮タスクを管理します。",
     "queue_status_description": "AI 要約キューの進行状況、最近のタスク結果、失敗内容を確認します。",
     "settings_description": "サイトの挙動、連携設定、公開ルールを一か所で管理します。",
     "title": "管理画面",
@@ -48,6 +49,14 @@
       "run": "移行を開始",
       "progress": "{{processed}} / {{total}} 件処理済み、更新 {{updated}} 件、移行 {{migrated}} 枚、失敗 {{failed}} 枚。",
       "result": "外部画像の移行が完了しました。全 {{total}} 件を走査し、{{updated}} 件を更新、{{migrated}} 枚を移行、{{failed}} 枚が失敗しました。"
+    },
+    "image_assets": {
+      "title": "画像アセットインデックスを作成",
+      "description": "過去記事の画像とオブジェクトストレージの画像を走査し、管理可能な画像アセットと記事参照を作成します。",
+      "indexed": "{{count}} 枚インデックス済み",
+      "note": "オブジェクトストレージの走査範囲: {{scope}}",
+      "run": "インデックスを作成",
+      "result": "画像アセットインデックスが完了しました。記事画像 {{article}} 枚、ストレージ画像 {{storage}} 枚、外部画像 {{external}} 枚、未使用 {{unused}} 枚、失敗 {{failed}} 件。"
     }
   },
   "ai_summary": {
@@ -178,6 +187,73 @@
       "title": "目次は空です"
     },
     "title": "目次"
+  },
+  "images": {
+    "bulk_compress": {
+      "confirm": "選択した {{count}} 枚の画像を TinyPNG 圧縮キューに追加しますか？",
+      "result": "{{queued}} 枚をキューに追加し、{{skipped}} 枚をスキップしました。",
+      "title": "一括圧縮"
+    },
+    "bulk_delete": {
+      "confirm": "選択した未使用画像 {{count}} 枚を削除しますか？使用中または外部画像はスキップされます。",
+      "result": "{{deleted}} 枚を削除し、{{skipped}} 枚をスキップしました。",
+      "title": "一括削除"
+    },
+    "compression": {
+      "completed": "圧縮済み",
+      "failed": "失敗",
+      "idle": "未圧縮",
+      "pending": "キュー中",
+      "processing": "圧縮中",
+      "skipped": "スキップ済み"
+    },
+    "delete": {
+      "confirm": "画像 {{name}} を削除しますか？",
+      "title": "画像を削除"
+    },
+    "details": {
+      "filename": "ファイル名",
+      "no_usages": "この画像を参照している記事はありません。",
+      "note": "メモ",
+      "open": "詳細",
+      "saved": "画像情報を保存しました",
+      "title": "画像詳細",
+      "usages": "参照記事"
+    },
+    "empty": {
+      "description": "現在のフィルターに一致する画像はありません。",
+      "title": "画像がありません"
+    },
+    "filter": {
+      "all": "すべての画像",
+      "all_articles": "すべての記事",
+      "unused": "未使用",
+      "used": "使用中"
+    },
+    "loading": "画像アセットを読み込んでいます...",
+    "search": "ファイル名または URL を検索",
+    "selected$count_one": "{{count}} 枚選択中",
+    "selected$count_other": "{{count}} 枚選択中",
+    "source": {
+      "article": "記事",
+      "external": "外部",
+      "storage": "ストレージ",
+      "upload": "アップロード"
+    },
+    "stats": {
+      "compressible": "圧縮可能",
+      "total": "画像総数",
+      "total_size": "合計サイズ",
+      "unused": "未使用"
+    },
+    "title": "画像管理",
+    "unused": "未使用",
+    "used$count_one": "{{count}} 件の記事で使用",
+    "used$count_other": "{{count}} 件の記事で使用",
+    "view": {
+      "grid": "サムネイル表示",
+      "list": "リスト表示"
+    }
   },
   "listed": "記事にリスト",
   "load_more": "もっと読み込む",

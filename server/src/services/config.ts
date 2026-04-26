@@ -22,6 +22,7 @@ import {
     listExternalImageCompatCandidates,
     listBlurhashCompatCandidates,
     migrateExternalImagesForFeed,
+    runCompatImageAssetIndex,
     runCompatAISummaryBackfill,
 } from "./config-compat-tasks";
 
@@ -278,6 +279,21 @@ export function ConfigService(): Hono {
             const message = error instanceof Error ? error.message : String(error);
             const status = message === 'Feed not found' ? 404 : 400;
             return c.text(message, status);
+        }
+    });
+
+    app.post('/compat-tasks/image-assets', async (c: AppContext) => {
+        const admin = c.get('admin');
+
+        if (!admin) {
+            return c.text('Unauthorized', 401);
+        }
+
+        try {
+            return c.json(await wrapTime(c, 'compat_image_assets', runCompatImageAssetIndex(c.get('db'), c.get('env'), new URL(c.req.url).origin)));
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return c.text(message, 400);
         }
     });
 

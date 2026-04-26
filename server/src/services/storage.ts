@@ -3,6 +3,7 @@ import type { AppContext } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { getStorageObject, putStorageObject, putStorageObjectAtKey } from "../utils/storage";
 import { canCompressWithTinyPng, compressWithTinyPng } from "../utils/tinypng";
+import { registerUploadedImageAsset } from "./images";
 
 function buf2hex(buffer: ArrayBuffer) {
     return [...new Uint8Array(buffer)]
@@ -65,7 +66,12 @@ export function StorageService(): Hono {
         const hashkey = `${hash}.${suffix}`;
         
         try {
-            const result = await profileAsync(c, 'storage_put', () => putStorageObject(env, hashkey, fileBuffer, contentType, new URL(c.req.url).origin));
+            const baseUrl = new URL(c.req.url).origin;
+            const result = await profileAsync(c, 'storage_put', () => putStorageObject(env, hashkey, fileBuffer, contentType, baseUrl));
+            await profileAsync(c, 'storage_asset_register', () => registerUploadedImageAsset(c.get("db"), env, result.key, result.url, {
+                contentType,
+                size: fileBuffer.byteLength,
+            }, baseUrl));
 
             if (tinypngEnabled.enabled && tinypngEnabled.apiKey && canCompressWithTinyPng(contentType)) {
                 const originalBuffer = fileBuffer;
@@ -78,7 +84,7 @@ export function StorageService(): Hono {
                             result.key,
                             compressed.body,
                             compressed.contentType || originalContentType,
-                            new URL(c.req.url).origin,
+                            baseUrl,
                         );
                     } catch (error) {
                         console.error("TinyPNG background compression failed:", error);

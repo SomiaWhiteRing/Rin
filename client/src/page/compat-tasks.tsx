@@ -18,12 +18,14 @@ export function CompatTasksPage() {
     aiSummary: { enabled: boolean; queueConfigured: boolean; eligible: number; forceEligible: number };
     blurhash: { eligible: number };
     externalImages: { eligible: number };
+    imageAssets: { indexed: number; storageScope: string };
   }>({
     aiSummary: { enabled: false, queueConfigured: false, eligible: 0, forceEligible: 0 },
     blurhash: { eligible: 0 },
     externalImages: { eligible: 0 },
+    imageAssets: { indexed: 0, storageScope: "" },
   });
-  const [runningTask, setRunningTask] = useState<"ai-summary" | "blurhash" | "external-images" | null>(null);
+  const [runningTask, setRunningTask] = useState<"ai-summary" | "blurhash" | "external-images" | "image-assets" | null>(null);
   const [blurhashProgress, setBlurhashProgress] = useState({ total: 0, processed: 0, updated: 0, failed: 0 });
   const [externalImageProgress, setExternalImageProgress] = useState({ total: 0, processed: 0, updated: 0, migrated: 0, failed: 0 });
   const { showAlert, AlertUI } = useAlert();
@@ -155,6 +157,29 @@ export function CompatTasksPage() {
     }
   };
 
+  const runImageAssetIndex = async () => {
+    setRunningTask("image-assets");
+    try {
+      const { data, error } = await client.config.runCompatImageAssets();
+      if (error) {
+        showAlert(error.value);
+        return;
+      }
+      if (data) {
+        showAlert(t("compat_tasks.image_assets.result", {
+          article: data.articleImages,
+          storage: data.storageImages,
+          external: data.externalImages,
+          unused: data.unused,
+          failed: data.failed,
+        }));
+        loadStatus();
+      }
+    } finally {
+      setRunningTask(null);
+    }
+  };
+
   return (
     <div className="flex w-full flex-col gap-4">
       <Helmet>
@@ -269,6 +294,24 @@ export function CompatTasksPage() {
                   title={runningTask === "external-images" ? t("compat_tasks.running") : t("compat_tasks.external_images.run")}
                   disabled={runningTask !== null || status.externalImages.eligible === 0}
                   onClick={runExternalImageMigration}
+                />
+              </div>
+            </SettingsCardBody>
+          </SettingsCard>
+
+          <SettingsCard>
+            <SettingsCardHeader
+              title={t("compat_tasks.image_assets.title")}
+              description={t("compat_tasks.image_assets.description")}
+              badge={<SettingsBadge>{t("compat_tasks.image_assets.indexed", { count: status.imageAssets.indexed })}</SettingsBadge>}
+            />
+            <SettingsCardBody>
+              <div className="space-y-3 text-sm text-neutral-600 dark:text-neutral-300">
+                <p>{t("compat_tasks.image_assets.note", { scope: status.imageAssets.storageScope || "/" })}</p>
+                <Button
+                  title={runningTask === "image-assets" ? t("compat_tasks.running") : t("compat_tasks.image_assets.run")}
+                  disabled={runningTask !== null}
+                  onClick={runImageAssetIndex}
                 />
               </div>
             </SettingsCardBody>

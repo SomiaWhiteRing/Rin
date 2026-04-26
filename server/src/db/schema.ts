@@ -84,6 +84,37 @@ export const comments = sqliteTable("comments", {
     updatedAt: updated_at,
 });
 
+export const imageAssets = sqliteTable("image_assets", {
+    id: integer("id").primaryKey(),
+    url: text("url").notNull().unique(),
+    storageKey: text("storage_key").unique(),
+    source: text("source").default("article").notNull(),
+    filename: text("filename").default("").notNull(),
+    note: text("note").default("").notNull(),
+    contentType: text("content_type").default("").notNull(),
+    size: integer("size").default(0).notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    blurhash: text("blurhash").default("").notNull(),
+    compressionStatus: text("compression_status").default("idle").notNull(),
+    compressionError: text("compression_error").default("").notNull(),
+    originalSize: integer("original_size"),
+    compressedAt: integer("compressed_at", { mode: "timestamp" }),
+    createdAt: created_at,
+    updatedAt: updated_at,
+});
+
+export const imageUsages = sqliteTable("image_usages", {
+    id: integer("id").primaryKey(),
+    assetId: integer("asset_id").references(() => imageAssets.id, { onDelete: "cascade" }).notNull(),
+    feedId: integer("feed_id").references(() => feeds.id, { onDelete: "cascade" }).notNull(),
+    rawUrl: text("raw_url").notNull(),
+    createdAt: created_at,
+    updatedAt: updated_at,
+}, (table) => ({
+    assetFeedUnique: unique().on(table.assetId, table.feedId),
+}));
+
 export const hashtags = sqliteTable("hashtags", {
     id: integer("id").primaryKey(),
     name: text("name").notNull(),
@@ -134,6 +165,21 @@ export const commentsRelations = relations(comments, ({ one }) => ({
     user: one(users, {
         fields: [comments.userId],
         references: [users.id],
+    }),
+}));
+
+export const imageAssetsRelations = relations(imageAssets, ({ many }) => ({
+    usages: many(imageUsages),
+}));
+
+export const imageUsagesRelations = relations(imageUsages, ({ one }) => ({
+    asset: one(imageAssets, {
+        fields: [imageUsages.assetId],
+        references: [imageAssets.id],
+    }),
+    feed: one(feeds, {
+        fields: [imageUsages.feedId],
+        references: [feeds.id],
     }),
 }));
 

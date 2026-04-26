@@ -19,6 +19,7 @@ import { FriendsPage } from "../page/friends";
 import { HealthPage } from "../page/health";
 import { HashtagPage } from "../page/hashtag";
 import { HashtagsPage } from "../page/hashtags";
+import { ImagesPage } from "../page/images";
 import { LoginPage } from "../page/login";
 import { MomentsPage } from "../page/moments";
 import { ProfilePage } from "../page/profile";
@@ -82,6 +83,10 @@ export function AppRoutes() {
 
       <AdminRoute path="/admin/writing" requirePermission title={t("writing")} description={t("admin.writing_description")}>
         <WritingPage />
+      </AdminRoute>
+
+      <AdminRoute path="/admin/images" requirePermission title={t("images.title")} description={t("admin.images_description")}>
+        <ImagesPage />
       </AdminRoute>
 
       <AdminRoute path="/admin/writing/:id" requirePermission title={t("writing")} description={t("admin.writing_description")}>
