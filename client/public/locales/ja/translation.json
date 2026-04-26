@@ -235,11 +235,19 @@
       "title": "画像がありません"
     },
     "filter": {
+      "active": "有効なフィルター",
       "all": "すべての画像",
       "all_articles": "すべての記事",
+      "article": "記事",
+      "clear": "フィルターをクリア",
       "created_from": "追加日開始",
       "created_to": "追加日終了",
+      "favorite": "お気に入り",
+      "from$value": "{{value}} から",
+      "search": "検索",
+      "to$value": "{{value}} まで",
       "unused": "未使用",
+      "usage": "使用状況",
       "used": "使用中"
     },
     "favorite": {
@@ -255,6 +263,11 @@
     },
     "loading": "画像アセットを読み込んでいます...",
     "search": "ファイル名または URL を検索",
+    "selection": {
+      "all": "現在のページを選択",
+      "clear": "選択を解除",
+      "summary": "{{size}} 選択中、削除可能 {{deletable}} 件、圧縮可能 {{compressible}} 件"
+    },
     "selected$count_one": "{{count}} 枚選択中",
     "selected$count_other": "{{count}} 枚選択中",
     "source": {
@@ -274,6 +287,12 @@
       "total": "画像総数",
       "total_size": "合計サイズ",
       "unused": "未使用"
+    },
+    "results": {
+      "all": "最近追加された画像を表示しています。",
+      "filtered": "有効なフィルターに一致する画像を表示しています。",
+      "title$count_one": "{{count}} 件の画像",
+      "title$count_other": "{{count}} 件の画像"
     },
     "title": "画像管理",
     "unused": "未使用",

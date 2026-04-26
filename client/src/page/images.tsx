@@ -1,5 +1,5 @@
-import { SettingsBadge, SettingsCard, SettingsCardBody, SettingsCardHeader } from "@rin/ui";
-import { useEffect, useState } from "react";
+import { SettingsBadge, SettingsCard, SettingsCardHeader } from "@rin/ui";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useTranslation } from "react-i18next";
 import ReactLoading from "react-loading";
@@ -27,17 +27,86 @@ function formatBytes(value: number) {
   return `${size >= 10 || unit === 0 ? size.toFixed(0) : size.toFixed(1)} ${units[unit]}`;
 }
 
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString();
+}
+
+function getImageKind(asset: ImageAsset) {
+  if (!asset.contentType) return "";
+  return asset.contentType.replace(/^image\//, "").toUpperCase();
+}
+
+function getDimensions(asset: ImageAsset) {
+  if (!asset.width || !asset.height) return "";
+  return `${asset.width} x ${asset.height}`;
+}
+
 function getCompressionTone(status: ImageAsset["compressionStatus"]) {
   if (status === "completed") return "success";
   if (status === "pending" || status === "processing") return "warning";
   return "neutral";
 }
 
-function ImagePreview({ asset }: { asset: ImageAsset }) {
+function FilterField({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-black/10 bg-neutral-100 dark:border-white/10 dark:bg-white/5">
+    <label className="min-w-0 text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">
+      <span>{label}</span>
+      <div className="mt-1">{children}</div>
+    </label>
+  );
+}
+
+function ActiveFilter({ children, onClear }: { children: ReactNode; onClear: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClear}
+      className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-200 dark:bg-white/10 dark:text-neutral-200 dark:hover:bg-white/15"
+    >
+      <span>{children}</span>
+      <i className="ri-close-line text-sm" aria-hidden="true" />
+    </button>
+  );
+}
+
+function CompactAction({
+  title,
+  icon,
+  disabled,
+  onClick,
+}: {
+  title: string;
+  icon: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      disabled={disabled}
+      onClick={onClick}
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white/10 dark:text-neutral-200 dark:hover:bg-white/15"
+    >
+      <i className={icon} aria-hidden="true" />
+    </button>
+  );
+}
+
+function ImagePreview({ asset, compact = false }: { asset: ImageAsset; compact?: boolean }) {
+  return (
+    <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-black/10 bg-neutral-100 dark:border-white/10 dark:bg-white/5 ${compact ? "h-12 w-12" : "h-16 w-16"}`}>
       {asset.url ? (
-        <img src={asset.url} alt={asset.filename} className="h-full w-full object-cover" loading="lazy" />
+        <img
+          src={asset.url}
+          alt=""
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
       ) : (
         <i className="ri-image-line text-xl text-neutral-400" />
       )}
@@ -51,7 +120,6 @@ export function ImagesPage() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<ImageAsset[]>([]);
   const [stats, setStats] = useState<ImageStatsResponse>({ total: 0, used: 0, unused: 0, totalSize: 0, compressible: 0 });
-  const [keyword, setKeyword] = useState("");
   const [usage, setUsage] = useState<ImageUsageFilter>("all");
   const [favorite, setFavorite] = useState<ImageFavoriteFilter>("all");
   const [feedId, setFeedId] = useState(0);
@@ -67,6 +135,13 @@ export function ImagesPage() {
   const [editNote, setEditNote] = useState("");
   const { showAlert, AlertUI } = useAlert();
   const { showConfirm, ConfirmUI } = useConfirm();
+  const canCompress = (asset: ImageAsset) => Boolean(asset.storageKey) && ["image/png", "image/jpeg", "image/webp"].some((type) => asset.contentType.startsWith(type));
+  const canDelete = (asset: ImageAsset) => asset.usageCount === 0 && Boolean(asset.storageKey) && asset.favorite !== 1;
+  const hasActiveFilters = Boolean(usage !== "all" || favorite !== "all" || feedId || createdFrom || createdTo);
+  const selectedAssets = useMemo(() => items.filter((asset) => selectedIds.includes(asset.id)), [items, selectedIds]);
+  const selectedDeletableCount = selectedAssets.filter(canDelete).length;
+  const selectedCompressibleCount = selectedAssets.filter(canCompress).length;
+  const selectedTotalSize = selectedAssets.reduce((total, asset) => total + asset.size, 0);
 
   const loadImages = () => {
     setLoading(true);
@@ -74,7 +149,6 @@ export function ImagesPage() {
       .list({
         page: 1,
         limit: 100,
-        keyword,
         usage,
         favorite,
         feedId: feedId || undefined,
@@ -242,15 +316,31 @@ export function ImagesPage() {
   const renderMeta = (asset: ImageAsset) => (
     <div className="flex flex-wrap gap-2 text-xs text-neutral-500 dark:text-neutral-400">
       <span>{formatBytes(asset.size)}</span>
-      {asset.width && asset.height ? <span>{asset.width} x {asset.height}</span> : null}
-      {asset.contentType ? <span>{asset.contentType}</span> : null}
+      {getDimensions(asset) ? <span>{getDimensions(asset)}</span> : null}
+      {getImageKind(asset) ? <span>{getImageKind(asset)}</span> : null}
       <span>{t(asset.usageCount > 0 ? "images.used$count" : "images.unused", { count: asset.usageCount })}</span>
-      <span>{t("images.created_at", { date: new Date(asset.createdAt).toLocaleString() })}</span>
+      <span>{t("images.created_at", { date: formatDateTime(asset.createdAt) })}</span>
     </div>
   );
 
-  const canCompress = (asset: ImageAsset) => Boolean(asset.storageKey) && ["image/png", "image/jpeg", "image/webp"].some((type) => asset.contentType.startsWith(type));
-  const canDelete = (asset: ImageAsset) => asset.usageCount === 0 && Boolean(asset.storageKey) && asset.favorite !== 1;
+  const renderCompactMeta = (asset: ImageAsset) => (
+    <div className="flex min-w-0 items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+      <span className="shrink-0">{formatBytes(asset.size)}</span>
+      {getDimensions(asset) ? <span className="shrink-0">{getDimensions(asset)}</span> : null}
+      {getImageKind(asset) ? <span className="shrink-0">{getImageKind(asset)}</span> : null}
+      <span className="shrink-0">{t(asset.usageCount > 0 ? "images.used$count" : "images.unused", { count: asset.usageCount })}</span>
+      <span className="min-w-0 truncate">{formatDateTime(asset.createdAt)}</span>
+    </div>
+  );
+
+  const clearFilters = () => {
+    setUsage("all");
+    setFavorite("all");
+    setFeedId(0);
+    setCreatedFrom("");
+    setCreatedTo("");
+    setSort("created_desc");
+  };
 
   const deleteDisabledReason = (asset: ImageAsset) => {
     if (asset.favorite === 1) return t("images.delete.disabled_favorite");
@@ -368,72 +458,111 @@ export function ImagesPage() {
       </div>
 
       <SettingsCard>
-        <SettingsCardBody>
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
-            <form
-              className="flex min-w-0 flex-1 gap-2"
-              onSubmit={(event) => {
-                event.preventDefault();
-                loadImages();
-              }}
-            >
-              <input
-                value={keyword}
-                onChange={(event) => setKeyword(event.target.value)}
-                placeholder={t("images.search")}
-                className="min-w-0 flex-1 rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm t-primary dark:border-white/10"
-              />
-              <Button title={t("article.search.title")} onClick={loadImages} />
-            </form>
+        <div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <FilterField label={t("images.filter.usage")}>
+              <select value={usage} onChange={(event) => setUsage(event.target.value as ImageUsageFilter)} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
+                <option value="all">{t("images.filter.all")}</option>
+                <option value="used">{t("images.filter.used")}</option>
+                <option value="unused">{t("images.filter.unused")}</option>
+              </select>
+            </FilterField>
 
-            <select value={usage} onChange={(event) => setUsage(event.target.value as ImageUsageFilter)} className="rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
-              <option value="all">{t("images.filter.all")}</option>
-              <option value="used">{t("images.filter.used")}</option>
-              <option value="unused">{t("images.filter.unused")}</option>
-            </select>
+            <FilterField label={t("images.filter.favorite")}>
+              <select value={favorite} onChange={(event) => setFavorite(event.target.value as ImageFavoriteFilter)} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
+                <option value="all">{t("images.favorite_filter.all")}</option>
+                <option value="favorited">{t("images.favorite_filter.favorited")}</option>
+                <option value="normal">{t("images.favorite_filter.normal")}</option>
+              </select>
+            </FilterField>
 
-            <select value={favorite} onChange={(event) => setFavorite(event.target.value as ImageFavoriteFilter)} className="rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
-              <option value="all">{t("images.favorite_filter.all")}</option>
-              <option value="favorited">{t("images.favorite_filter.favorited")}</option>
-              <option value="normal">{t("images.favorite_filter.normal")}</option>
-            </select>
-
-            <select value={feedId} onChange={(event) => setFeedId(Number(event.target.value))} className="rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
-              <option value={0}>{t("images.filter.all_articles")}</option>
-              {feeds.map((feed) => (
-                <option key={feed.id} value={feed.id}>{feed.title || `#${feed.id}`}</option>
-              ))}
-            </select>
+            <FilterField label={t("images.filter.article")}>
+              <select value={feedId} onChange={(event) => setFeedId(Number(event.target.value))} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
+                <option value={0}>{t("images.filter.all_articles")}</option>
+                {feeds.map((feed) => (
+                  <option key={feed.id} value={feed.id}>{feed.title || `#${feed.id}`}</option>
+                ))}
+              </select>
+            </FilterField>
           </div>
 
-          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-[auto_auto_auto_auto_1fr] xl:items-center">
-            <input type="date" value={createdFrom} onChange={(event) => setCreatedFrom(event.target.value)} className="rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10" aria-label={t("images.filter.created_from")} />
-            <input type="date" value={createdTo} onChange={(event) => setCreatedTo(event.target.value)} className="rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10" aria-label={t("images.filter.created_to")} />
-            <select value={sort} onChange={(event) => setSort(event.target.value as ImageSort)} className="rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
-              <option value="created_desc">{t("images.sort.created_desc")}</option>
-              <option value="created_asc">{t("images.sort.created_asc")}</option>
-              <option value="size_desc">{t("images.sort.size_desc")}</option>
-              <option value="size_asc">{t("images.sort.size_asc")}</option>
-            </select>
-            <div className="flex rounded-lg border border-black/10 p-1 dark:border-white/10">
-              <button type="button" title={t("images.view.list")} onClick={() => setViewMode("list")} className={`rounded-md px-3 py-1.5 ${viewMode === "list" ? "bg-theme text-white" : "t-primary"}`}>
-                <i className="ri-list-check" />
-              </button>
-              <button type="button" title={t("images.view.grid")} onClick={() => setViewMode("grid")} className={`rounded-md px-3 py-1.5 ${viewMode === "grid" ? "bg-theme text-white" : "t-primary"}`}>
-                <i className="ri-layout-grid-line" />
-              </button>
+          <div className="mt-4 grid gap-4 border-t border-black/5 pt-4 dark:border-white/5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+            <div>
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-[minmax(0,12rem)_minmax(0,12rem)]">
+                <FilterField label={t("images.filter.created_from")}>
+                  <input type="date" value={createdFrom} onChange={(event) => setCreatedFrom(event.target.value)} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10" />
+                </FilterField>
+                <FilterField label={t("images.filter.created_to")}>
+                  <input type="date" value={createdTo} onChange={(event) => setCreatedTo(event.target.value)} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10" />
+                </FilterField>
+              </div>
+              {hasActiveFilters ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">{t("images.filter.active")}</span>
+                  {usage !== "all" ? <ActiveFilter onClear={() => setUsage("all")}>{t(`images.filter.${usage}`)}</ActiveFilter> : null}
+                  {favorite !== "all" ? <ActiveFilter onClear={() => setFavorite("all")}>{t(`images.favorite_filter.${favorite}`)}</ActiveFilter> : null}
+                  {feedId ? <ActiveFilter onClear={() => setFeedId(0)}>{feeds.find((feed) => feed.id === feedId)?.title || `#${feedId}`}</ActiveFilter> : null}
+                  {createdFrom ? <ActiveFilter onClear={() => setCreatedFrom("")}>{t("images.filter.from$value", { value: createdFrom })}</ActiveFilter> : null}
+                  {createdTo ? <ActiveFilter onClear={() => setCreatedTo("")}>{t("images.filter.to$value", { value: createdTo })}</ActiveFilter> : null}
+                  <button type="button" className="text-xs font-semibold text-theme" onClick={clearFilters}>{t("images.filter.clear")}</button>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <select value={sort} onChange={(event) => setSort(event.target.value as ImageSort)} className="rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
+                <option value="created_desc">{t("images.sort.created_desc")}</option>
+                <option value="created_asc">{t("images.sort.created_asc")}</option>
+                <option value="size_desc">{t("images.sort.size_desc")}</option>
+                <option value="size_asc">{t("images.sort.size_asc")}</option>
+              </select>
+              <div className="flex rounded-lg border border-black/10 p-1 dark:border-white/10">
+                <button type="button" title={t("images.view.list")} onClick={() => setViewMode("list")} className={`rounded-md px-3 py-1.5 ${viewMode === "list" ? "bg-theme text-white" : "t-primary"}`}>
+                  <i className="ri-list-check" />
+                </button>
+                <button type="button" title={t("images.view.grid")} onClick={() => setViewMode("grid")} className={`rounded-md px-3 py-1.5 ${viewMode === "grid" ? "bg-theme text-white" : "t-primary"}`}>
+                  <i className="ri-layout-grid-line" />
+                </button>
+              </div>
             </div>
           </div>
 
           {selectedIds.length > 0 ? (
-            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-black/5 pt-4 text-sm dark:border-white/5">
-              <span className="text-neutral-500 dark:text-neutral-400">{t("images.selected$count", { count: selectedIds.length })}</span>
-              <Button secondary title={t("images.bulk_delete.title")} disabled={acting} onClick={runBulkDelete} />
-              <Button title={t("images.bulk_compress.title")} disabled={acting} onClick={runBulkCompress} />
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-theme/20 bg-theme/5 p-3 text-sm">
+              <div>
+                <p className="font-semibold t-primary">{t("images.selected$count", { count: selectedIds.length })}</p>
+                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  {t("images.selection.summary", { size: formatBytes(selectedTotalSize), deletable: selectedDeletableCount, compressible: selectedCompressibleCount })}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button secondary title={t("images.selection.clear")} disabled={acting} onClick={() => setSelectedIds([])} />
+                <Button secondary title={t("images.bulk_delete.title")} disabled={acting || selectedDeletableCount === 0} onClick={runBulkDelete} />
+                <Button title={t("images.bulk_compress.title")} disabled={acting || selectedCompressibleCount === 0} onClick={runBulkCompress} />
+              </div>
             </div>
           ) : null}
-        </SettingsCardBody>
+        </div>
       </SettingsCard>
+
+      {!loading && items.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold t-primary">{t("images.results.title$count", { count: items.length })}</p>
+            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              {hasActiveFilters ? t("images.results.filtered") : t("images.results.all")}
+            </p>
+          </div>
+          <label className="inline-flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+            <input
+              type="checkbox"
+              checked={items.length > 0 && selectedIds.length === items.length}
+              onChange={(event) => setSelectedIds(event.target.checked ? items.map((asset) => asset.id) : [])}
+            />
+            {t("images.selection.all")}
+          </label>
+        </div>
+      ) : null}
 
       {loading ? (
         <div className="flex items-center gap-3 py-8 text-sm text-neutral-500 dark:text-neutral-400">
@@ -451,76 +580,99 @@ export function ImagesPage() {
       {!loading && viewMode === "list" && items.length > 0 ? (
         <div className="overflow-hidden rounded-xl border border-black/10 dark:border-white/10">
           {items.map((asset) => (
-            <div key={asset.id} className="flex items-center gap-4 border-b border-black/5 p-4 last:border-b-0 dark:border-white/5">
+            <div key={asset.id} className="grid grid-cols-[auto_3rem_minmax(13rem,1fr)_minmax(0,1.5fr)_auto] items-center gap-3 border-b border-black/5 px-3 py-2 last:border-b-0 dark:border-white/5">
               <input type="checkbox" checked={selectedIds.includes(asset.id)} onChange={() => toggleSelected(asset.id)} />
-              <ImagePreview asset={asset} />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <SettingsBadge tone={asset.favorite === 1 ? "warning" : "neutral"}>{asset.favorite === 1 ? t("images.favorite.yes") : t("images.favorite.no")}</SettingsBadge>
-                  <SettingsBadge tone={asset.source === "external" ? "neutral" : "success"}>{t(`images.source.${asset.source}`)}</SettingsBadge>
-                  <SettingsBadge tone={getCompressionTone(asset.compressionStatus)}>{t(`images.compression.${asset.compressionStatus}`)}</SettingsBadge>
-                </div>
-                <div className="mt-2">{renderMeta(asset)}</div>
+              <button type="button" onClick={() => openDetails(asset)} title={t("images.details.open")}>
+                <ImagePreview asset={asset} compact />
+              </button>
+              <div className="flex min-w-0 items-center gap-2 overflow-hidden [&>span]:shrink-0 [&>span]:whitespace-nowrap">
+                <SettingsBadge tone={asset.favorite === 1 ? "warning" : "neutral"}>{asset.favorite === 1 ? t("images.favorite.yes") : t("images.favorite.no")}</SettingsBadge>
+                <SettingsBadge tone={asset.source === "external" ? "neutral" : "success"}>{t(`images.source.${asset.source}`)}</SettingsBadge>
+                <SettingsBadge tone={getCompressionTone(asset.compressionStatus)}>{t(`images.compression.${asset.compressionStatus}`)}</SettingsBadge>
               </div>
-              <Button
-                secondary
-                title={asset.favorite === 1 ? t("images.favorite.remove") : t("images.favorite.add")}
-                onClick={() => toggleFavorite(asset)}
-              />
-              <Button
-                secondary
-                title={t("images.copy.title")}
-                onClick={() => copyLink(asset)}
-              />
-              <Button
-                secondary
-                title={t("images.details.open")}
-                onClick={() => openDetails(asset)}
-              />
-              <Button
-                secondary
-                title={t("images.compress_one")}
-                disabled={acting || !canCompress(asset)}
-                onClick={() => compressOne(asset)}
-              />
-              <Button
-                secondary
-                title={t("delete.title")}
-                disabled={!canDelete(asset)}
-                onClick={() => deleteOne(asset)}
-              />
+              <div className="min-w-0 overflow-hidden">
+                {renderCompactMeta(asset)}
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <CompactAction
+                  icon={asset.favorite === 1 ? "ri-star-fill" : "ri-star-line"}
+                  title={asset.favorite === 1 ? t("images.favorite.remove") : t("images.favorite.add")}
+                  onClick={() => toggleFavorite(asset)}
+                />
+                <CompactAction
+                  icon="ri-file-copy-line"
+                  title={t("images.copy.title")}
+                  onClick={() => copyLink(asset)}
+                />
+                <CompactAction
+                  icon="ri-information-line"
+                  title={t("images.details.open")}
+                  onClick={() => openDetails(asset)}
+                />
+                <CompactAction
+                  icon="ri-file-zip-line"
+                  title={t("images.compress_one")}
+                  disabled={acting || !canCompress(asset)}
+                  onClick={() => compressOne(asset)}
+                />
+                <CompactAction
+                  icon="ri-delete-bin-line"
+                  title={t("delete.title")}
+                  disabled={!canDelete(asset)}
+                  onClick={() => deleteOne(asset)}
+                />
+              </div>
             </div>
           ))}
         </div>
       ) : null}
 
       {!loading && viewMode === "grid" && items.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-4">
           {items.map((asset) => (
-            <SettingsCard key={asset.id}>
-              <SettingsCardBody>
-                <div className="space-y-3">
-                  <div className="relative aspect-video overflow-hidden rounded-lg border border-black/10 bg-neutral-100 dark:border-white/10 dark:bg-white/5">
-                    <img src={asset.url} alt={asset.filename} className="h-full w-full object-cover" loading="lazy" />
-                    <input className="absolute left-3 top-3" type="checkbox" checked={selectedIds.includes(asset.id)} onChange={() => toggleSelected(asset.id)} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="mt-2">{renderMeta(asset)}</div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <SettingsBadge tone={asset.favorite === 1 ? "warning" : "neutral"}>{asset.favorite === 1 ? t("images.favorite.yes") : t("images.favorite.no")}</SettingsBadge>
-                    <SettingsBadge tone={asset.source === "external" ? "neutral" : "success"}>{t(`images.source.${asset.source}`)}</SettingsBadge>
-                    <SettingsBadge tone={getCompressionTone(asset.compressionStatus)}>{t(`images.compression.${asset.compressionStatus}`)}</SettingsBadge>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button secondary title={asset.favorite === 1 ? t("images.favorite.remove") : t("images.favorite.add")} onClick={() => toggleFavorite(asset)} />
-                    <Button secondary title={t("images.copy.title")} onClick={() => copyLink(asset)} />
-                    <Button secondary title={t("images.compress_one")} disabled={acting || !canCompress(asset)} onClick={() => compressOne(asset)} />
-                    <Button secondary title={t("images.details.open")} onClick={() => openDetails(asset)} />
-                  </div>
+            <div key={asset.id} className="overflow-hidden rounded-xl border border-neutral-200/80 bg-w dark:border-neutral-800/80">
+              <div className="relative aspect-[4/3] bg-neutral-100 dark:bg-white/5">
+                <button type="button" className="block h-full w-full" onClick={() => openDetails(asset)} title={t("images.details.open")}>
+                  <img
+                    src={asset.url}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform hover:scale-[1.02]"
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                </button>
+                <div className="absolute left-3 top-3 rounded-full bg-white/90 p-1 shadow-sm dark:bg-neutral-950/80">
+                  <input type="checkbox" checked={selectedIds.includes(asset.id)} onChange={() => toggleSelected(asset.id)} />
                 </div>
-              </SettingsCardBody>
-            </SettingsCard>
+                <div className="absolute right-3 top-3 flex max-w-[calc(100%-4rem)] flex-wrap justify-end gap-2 [&>span]:shadow-sm [&>span]:whitespace-nowrap">
+                  {asset.favorite === 1 ? <SettingsBadge tone="warning">{t("images.favorite.yes")}</SettingsBadge> : null}
+                  <SettingsBadge tone={asset.source === "external" ? "neutral" : "success"}>{t(`images.source.${asset.source}`)}</SettingsBadge>
+                  <SettingsBadge tone={getCompressionTone(asset.compressionStatus)}>{t(`images.compression.${asset.compressionStatus}`)}</SettingsBadge>
+                </div>
+              </div>
+              <div className="p-3">
+                <div className="min-w-0 overflow-hidden">{renderCompactMeta(asset)}</div>
+                <div className="mt-3 flex items-center justify-end gap-2">
+                  <CompactAction
+                    icon={asset.favorite === 1 ? "ri-star-fill" : "ri-star-line"}
+                    title={asset.favorite === 1 ? t("images.favorite.remove") : t("images.favorite.add")}
+                    onClick={() => toggleFavorite(asset)}
+                  />
+                  <CompactAction
+                    icon="ri-file-copy-line"
+                    title={t("images.copy.title")}
+                    onClick={() => copyLink(asset)}
+                  />
+                  <CompactAction
+                    icon="ri-information-line"
+                    title={t("images.details.open")}
+                    onClick={() => openDetails(asset)}
+                  />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       ) : null}

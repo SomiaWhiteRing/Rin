@@ -235,11 +235,19 @@
       "title": "暫無圖片"
     },
     "filter": {
+      "active": "已啟用篩選",
       "all": "全部圖片",
       "all_articles": "全部文章",
+      "article": "文章",
+      "clear": "清除篩選",
       "created_from": "入庫開始時間",
       "created_to": "入庫結束時間",
+      "favorite": "收藏",
+      "from$value": "從 {{value}}",
+      "search": "搜尋",
+      "to$value": "到 {{value}}",
       "unused": "未使用",
+      "usage": "使用狀態",
       "used": "已使用"
     },
     "favorite": {
@@ -255,6 +263,11 @@
     },
     "loading": "正在載入圖片資產...",
     "search": "搜尋檔案名稱或 URL",
+    "selection": {
+      "all": "選取目前頁面",
+      "clear": "取消選取",
+      "summary": "已選 {{size}}，{{deletable}} 張可刪除，{{compressible}} 張可壓縮"
+    },
     "selected$count_one": "已選取 {{count}} 張",
     "selected$count_other": "已選取 {{count}} 張",
     "source": {
@@ -274,6 +287,12 @@
       "total": "圖片總數",
       "total_size": "總占用",
       "unused": "未使用"
+    },
+    "results": {
+      "all": "顯示最新入庫的圖片。",
+      "filtered": "顯示符合目前篩選條件的圖片。",
+      "title$count_one": "{{count}} 張圖片",
+      "title$count_other": "{{count}} 張圖片"
     },
     "title": "圖片管理",
     "unused": "未使用",

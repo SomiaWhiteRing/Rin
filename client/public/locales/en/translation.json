@@ -235,11 +235,19 @@
       "title": "No images"
     },
     "filter": {
+      "active": "Active filters",
       "all": "All images",
       "all_articles": "All articles",
+      "article": "Article",
+      "clear": "Clear filters",
       "created_from": "Added from",
       "created_to": "Added to",
+      "favorite": "Favorite",
+      "from$value": "From {{value}}",
+      "search": "Search",
+      "to$value": "To {{value}}",
       "unused": "Unused",
+      "usage": "Usage",
       "used": "Used"
     },
     "favorite": {
@@ -255,6 +263,11 @@
     },
     "loading": "Loading image assets...",
     "search": "Search filename or URL",
+    "selection": {
+      "all": "Select current page",
+      "clear": "Clear selection",
+      "summary": "{{size}} selected, {{deletable}} deletable, {{compressible}} compressible"
+    },
     "selected$count_one": "{{count}} selected",
     "selected$count_other": "{{count}} selected",
     "source": {
@@ -274,6 +287,12 @@
       "total": "Total images",
       "total_size": "Total size",
       "unused": "Unused"
+    },
+    "results": {
+      "all": "Showing the latest indexed images.",
+      "filtered": "Showing images that match the active filters.",
+      "title$count_one": "{{count}} image",
+      "title$count_other": "{{count}} images"
     },
     "title": "Image Management",
     "unused": "Unused",

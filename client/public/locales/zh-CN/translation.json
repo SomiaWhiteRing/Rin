@@ -235,11 +235,19 @@
       "title": "暂无图片"
     },
     "filter": {
+      "active": "已启用筛选",
       "all": "全部图片",
       "all_articles": "全部文章",
+      "article": "文章",
+      "clear": "清除筛选",
       "created_from": "入库开始时间",
       "created_to": "入库结束时间",
+      "favorite": "收藏",
+      "from$value": "从 {{value}}",
+      "search": "搜索",
+      "to$value": "到 {{value}}",
       "unused": "未使用",
+      "usage": "使用状态",
       "used": "已使用"
     },
     "favorite": {
@@ -255,6 +263,11 @@
     },
     "loading": "正在加载图片资产...",
     "search": "搜索文件名或 URL",
+    "selection": {
+      "all": "选择当前页",
+      "clear": "取消选择",
+      "summary": "已选 {{size}}，{{deletable}} 张可删除，{{compressible}} 张可压缩"
+    },
     "selected$count_one": "已选择 {{count}} 张",
     "selected$count_other": "已选择 {{count}} 张",
     "source": {
@@ -274,6 +287,12 @@
       "total": "图片总数",
       "total_size": "总占用",
       "unused": "未使用"
+    },
+    "results": {
+      "all": "显示最新入库的图片。",
+      "filtered": "显示匹配当前筛选条件的图片。",
+      "title$count_one": "{{count}} 张图片",
+      "title$count_other": "{{count}} 张图片"
     },
     "title": "图片管理",
     "unused": "未使用",
