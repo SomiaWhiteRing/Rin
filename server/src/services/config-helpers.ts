@@ -44,7 +44,7 @@ export type ResolvedWebhookConfig = {
 
 export type ConfigTypeParam = "client" | "server";
 
-export function isConfigType(type: string): type is ConfigTypeParam {
+export function isConfigType(type: unknown): type is ConfigTypeParam {
   return type === "client" || type === "server";
 }
 

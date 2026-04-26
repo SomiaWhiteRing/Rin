@@ -103,7 +103,7 @@ export function MomentsService(): Hono {
             return c.text('Permission denied', 403);
         }
         
-        const id_num = parseInt(id);
+        const id_num = Number.parseInt(id ?? "", 10);
         const moment = await profileAsync(c, 'moments_update_lookup', () => db.query.moments.findFirst({ where: eq(moments.id, id_num) }));
         
         if (!moment) {
@@ -139,7 +139,7 @@ export function MomentsService(): Hono {
             return c.text('Permission denied', 403);
         }
         
-        const id_num = parseInt(id);
+        const id_num = Number.parseInt(id ?? "", 10);
         const moment = await profileAsync(c, 'moments_delete_lookup', () => db.query.moments.findFirst({ where: eq(moments.id, id_num) }));
         
         if (!moment) {

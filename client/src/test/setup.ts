@@ -12,3 +12,15 @@ if (typeof document === "undefined") {
     window,
   });
 }
+
+const elementPrototype = globalThis.HTMLElement?.prototype as
+  | (HTMLElement & {
+      attachEvent?: () => void;
+      detachEvent?: () => void;
+    })
+  | undefined;
+
+if (elementPrototype) {
+  elementPrototype.attachEvent ??= () => {};
+  elementPrototype.detachEvent ??= () => {};
+}

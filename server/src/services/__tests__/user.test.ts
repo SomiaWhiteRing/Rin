@@ -147,14 +147,14 @@ describe('UserService', () => {
     describe('GET /github/callback - GitHub OAuth callback', () => {
         it('should authenticate existing user', async () => {
             const originalFetch = global.fetch;
-            global.fetch = async () => {
+            global.fetch = (async () => {
                 return new Response(JSON.stringify({
                     id: 'gh_123',
                     login: 'user1',
                     name: 'User One',
                     avatar_url: 'https://github.com/avatar.png'
                 }), { status: 200 });
-            };
+            }) as unknown as typeof fetch;
 
             try {
                 const res = await app.request('/github/callback?code=valid_code&state=mock_state', {

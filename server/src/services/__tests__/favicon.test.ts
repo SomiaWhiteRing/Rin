@@ -163,7 +163,7 @@ describe('FaviconService', () => {
             app.route('/', FaviconService());
 
             const originalFetch = globalThis.fetch;
-            globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+            globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
                 const url = typeof input === 'string'
                     ? input
                     : input instanceof URL
@@ -187,7 +187,7 @@ describe('FaviconService', () => {
                 }
 
                 return originalFetch(input, init);
-            };
+            }) as unknown as typeof fetch;
 
             try {
                 const res = await app.request('/', { method: 'GET' }, env);

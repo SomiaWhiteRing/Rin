@@ -14,7 +14,7 @@ export function StorageService(): Hono {
     const app = new Hono();
 
     function runInBackground(c: AppContext, task: Promise<unknown>) {
-        let executionCtx: ExecutionContext | undefined;
+        let executionCtx: AppContext["executionCtx"] | undefined;
         try {
             executionCtx = c.executionCtx;
         } catch {
