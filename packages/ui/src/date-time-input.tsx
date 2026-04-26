@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+type PickerMode = "day" | "month";
 
 function atMidnight(value: Date) {
   return new Date(value.getFullYear(), value.getMonth(), value.getDate());
@@ -84,6 +85,7 @@ export function DateTimeInput({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [pickerMode, setPickerMode] = useState<PickerMode>("day");
   const [cursor, setCursor] = useState<Date>(value ? new Date(value) : new Date());
   const [hours, setHours] = useState(() => `${value?.getHours() ?? 0}`.padStart(2, "0"));
   const [minutes, setMinutes] = useState(() => `${value?.getMinutes() ?? 0}`.padStart(2, "0"));
@@ -100,6 +102,7 @@ export function DateTimeInput({
     function handlePointerDown(event: MouseEvent) {
       if (!rootRef.current?.contains(event.target as Node)) {
         setIsOpen(false);
+        setPickerMode("day");
       }
     }
 
@@ -131,12 +134,18 @@ export function DateTimeInput({
     onChange(setTimeParts(selectedDate, nextHoursValue, nextMinutesValue));
   }
 
+  function setCursorMonth(month: number) {
+    setCursor(new Date(cursor.getFullYear(), month, 1));
+    setPickerMode("day");
+  }
+
   return (
     <div ref={rootRef} className={`relative min-w-0 ${className ?? ""}`}>
       <button
         type="button"
         onClick={() => {
           setCursor(value ? new Date(value) : new Date());
+          setPickerMode("day");
           setIsOpen((current) => !current);
         }}
         className="flex w-full items-center justify-between gap-3 rounded-xl border border-black/10 bg-w px-4 py-2 text-left text-sm t-primary transition-colors hover:border-black/20 focus:outline-none focus:ring-2 focus:ring-theme/10 dark:border-white/10 dark:hover:border-white/20"
@@ -153,57 +162,96 @@ export function DateTimeInput({
             <button
               type="button"
               onClick={() => {
-                setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1));
+                setCursor(
+                  pickerMode === "day"
+                    ? new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1)
+                    : new Date(cursor.getFullYear() - 1, cursor.getMonth(), 1),
+                );
               }}
               className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-white/5 dark:hover:text-neutral-200"
-              aria-label="Previous month"
+              aria-label={pickerMode === "day" ? "Previous month" : "Previous year"}
             >
               <i className="ri-arrow-left-s-line" />
             </button>
-            <div className="text-sm font-semibold t-primary">
-              {MONTHS[cursor.getMonth()]} {cursor.getFullYear()}
-            </div>
             <button
               type="button"
               onClick={() => {
-                setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1));
+                setPickerMode((current) => (current === "day" ? "month" : "day"));
+              }}
+              className="inline-flex h-9 min-w-[8rem] items-center justify-center rounded-xl px-3 text-sm font-semibold t-primary transition-colors hover:bg-neutral-100 dark:hover:bg-white/5"
+              aria-label={pickerMode === "day" ? "Select year and month" : "Back to date picker"}
+            >
+              {pickerMode === "day" ? `${MONTHS[cursor.getMonth()]} ${cursor.getFullYear()}` : cursor.getFullYear()}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCursor(
+                  pickerMode === "day"
+                    ? new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
+                    : new Date(cursor.getFullYear() + 1, cursor.getMonth(), 1),
+                );
               }}
               className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-white/5 dark:hover:text-neutral-200"
-              aria-label="Next month"
+              aria-label={pickerMode === "day" ? "Next month" : "Next year"}
             >
               <i className="ri-arrow-right-s-line" />
             </button>
           </div>
 
-          <div className="mt-4 grid grid-cols-7 gap-1">
-            {WEEKDAYS.map((weekday) => (
-              <div key={weekday} className="pb-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
-                {weekday}
-              </div>
-            ))}
-            {monthGrid.map(({ date, currentMonth }) => {
-              const selected = sameDay(date, selectedDate);
-              const today = sameDay(date, atMidnight(new Date()));
-              return (
+          {pickerMode === "day" ? (
+            <div className="mt-4 grid grid-cols-7 gap-1">
+              {WEEKDAYS.map((weekday) => (
+                <div key={weekday} className="pb-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
+                  {weekday}
+                </div>
+              ))}
+              {monthGrid.map(({ date, currentMonth }) => {
+                const selected = sameDay(date, selectedDate);
+                const today = sameDay(date, atMidnight(new Date()));
+                return (
+                  <button
+                    key={date.toISOString()}
+                    type="button"
+                    onClick={() => {
+                      applyDate(date);
+                    }}
+                    className={`flex h-10 items-center justify-center rounded-xl text-sm transition-colors ${
+                      selected
+                        ? "bg-theme text-white"
+                        : currentMonth
+                          ? "t-primary hover:bg-neutral-100 dark:hover:bg-white/5"
+                          : "text-neutral-300 hover:bg-neutral-100 dark:text-neutral-600 dark:hover:bg-white/5"
+                    } ${today && !selected ? "border border-theme/30" : ""}`}
+                  >
+                    {date.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {MONTHS.map((month, index) => {
+                const selected = selectedDate?.getFullYear() === cursor.getFullYear() && selectedDate.getMonth() === index;
+                return (
                 <button
-                  key={date.toISOString()}
+                  key={month}
                   type="button"
                   onClick={() => {
-                    applyDate(date);
+                    setCursorMonth(index);
                   }}
-                  className={`flex h-10 items-center justify-center rounded-xl text-sm transition-colors ${
+                  className={`flex h-11 items-center justify-center rounded-xl text-sm font-medium transition-colors ${
                     selected
                       ? "bg-theme text-white"
-                      : currentMonth
-                        ? "t-primary hover:bg-neutral-100 dark:hover:bg-white/5"
-                        : "text-neutral-300 hover:bg-neutral-100 dark:text-neutral-600 dark:hover:bg-white/5"
-                  } ${today && !selected ? "border border-theme/30" : ""}`}
+                      : "t-primary hover:bg-neutral-100 dark:hover:bg-white/5"
+                  }`}
                 >
-                  {date.getDate()}
+                  {month}
                 </button>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
 
           <div className="mt-4 flex items-center gap-2 border-t border-black/5 pt-4 dark:border-white/5">
             <input
@@ -235,6 +283,7 @@ export function DateTimeInput({
               onClick={() => {
                 onChange(undefined);
                 setIsOpen(false);
+                setPickerMode("day");
               }}
               className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-white/5 dark:hover:text-neutral-200"
             >
@@ -245,6 +294,7 @@ export function DateTimeInput({
               type="button"
               onClick={() => {
                 setIsOpen(false);
+                setPickerMode("day");
               }}
               className="inline-flex items-center gap-2 rounded-xl bg-theme px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-theme-hover active:bg-theme-active"
             >
