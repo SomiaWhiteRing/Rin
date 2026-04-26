@@ -57,20 +57,20 @@ async function serveSpaEntry(request: Request, env: Env) {
   return null;
 }
 
-export async function handleFetch(request: Request, env: Env): Promise<Response> {
+export async function handleFetch(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
   const pathname = url.pathname;
 
   if (isRootFeedRequest(pathname)) {
-    return getApp().fetch(request, env);
+    return getApp().fetch(request, env, ctx);
   }
 
   if (isApiRequest(pathname)) {
-    return getApp().fetch(rewriteApiRequest(request), env);
+    return getApp().fetch(rewriteApiRequest(request), env, ctx);
   }
 
   if (isAppPublicRoute(pathname)) {
-    return getApp().fetch(request, env);
+    return getApp().fetch(request, env, ctx);
   }
 
   if (isStaticAssetRequest(pathname)) {

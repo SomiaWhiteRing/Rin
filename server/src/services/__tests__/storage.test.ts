@@ -192,7 +192,7 @@ describe('StorageService', () => {
             expect(payload.url).toMatch(/^https:\/\/images\.example\.com\/images\/[a-f0-9]+\.txt$/);
         });
 
-        it('should compress supported images with TinyPNG before upload when enabled', async () => {
+        it('should upload immediately and compress supported images with TinyPNG in the background when enabled', async () => {
             const originalFetch = globalThis.fetch;
             const storedBodies: string[] = [];
             const r2Env = createMockEnv({
@@ -257,7 +257,13 @@ describe('StorageService', () => {
                 }, r2Env);
 
                 expect(res.status).toBe(200);
-                expect(storedBodies).toEqual(['compressed image']);
+                expect(storedBodies[0]).toBe('original image');
+
+                for (let attempt = 0; attempt < 10 && storedBodies.length < 2; attempt += 1) {
+                    await new Promise((resolve) => setTimeout(resolve, 5));
+                }
+
+                expect(storedBodies).toEqual(['original image', 'compressed image']);
             } finally {
                 globalThis.fetch = originalFetch;
             }

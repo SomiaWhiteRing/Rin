@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AppContext } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
-import { getStorageObject, putStorageObject } from "../utils/storage";
+import { getStorageObject, putStorageObject, putStorageObjectAtKey } from "../utils/storage";
 import { canCompressWithTinyPng, compressWithTinyPng } from "../utils/tinypng";
 
 function buf2hex(buffer: ArrayBuffer) {
@@ -12,6 +12,24 @@ function buf2hex(buffer: ArrayBuffer) {
 
 export function StorageService(): Hono {
     const app = new Hono();
+
+    function runInBackground(c: AppContext, task: Promise<unknown>) {
+        let executionCtx: ExecutionContext | undefined;
+        try {
+            executionCtx = c.executionCtx;
+        } catch {
+            executionCtx = undefined;
+        }
+
+        if (executionCtx) {
+            executionCtx.waitUntil(task);
+            return;
+        }
+
+        task.catch((error) => {
+            console.error("Background storage task failed:", error);
+        });
+    }
 
     // POST /storage
     app.post('/', async (c: AppContext) => {
@@ -39,19 +57,6 @@ export function StorageService(): Hono {
             };
         });
 
-        try {
-            if (tinypngEnabled.enabled && tinypngEnabled.apiKey && canCompressWithTinyPng(contentType)) {
-                const compressed = await profileAsync(c, 'storage_tinypng_compress', () => (
-                    compressWithTinyPng(fileBuffer, contentType, tinypngEnabled.apiKey)
-                ));
-                fileBuffer = compressed.body;
-                contentType = compressed.contentType || contentType;
-            }
-        } catch (e: any) {
-            console.error(e.message);
-            return c.text(e.message, 400);
-        }
-
         const hashArray = await profileAsync(c, 'storage_hash', () => crypto.subtle.digest(
             { name: 'SHA-1' },
             fileBuffer
@@ -61,6 +66,26 @@ export function StorageService(): Hono {
         
         try {
             const result = await profileAsync(c, 'storage_put', () => putStorageObject(env, hashkey, fileBuffer, contentType, new URL(c.req.url).origin));
+
+            if (tinypngEnabled.enabled && tinypngEnabled.apiKey && canCompressWithTinyPng(contentType)) {
+                const originalBuffer = fileBuffer;
+                const originalContentType = contentType;
+                runInBackground(c, (async () => {
+                    try {
+                        const compressed = await compressWithTinyPng(originalBuffer, originalContentType, tinypngEnabled.apiKey);
+                        await putStorageObjectAtKey(
+                            env,
+                            result.key,
+                            compressed.body,
+                            compressed.contentType || originalContentType,
+                            new URL(c.req.url).origin,
+                        );
+                    } catch (error) {
+                        console.error("TinyPNG background compression failed:", error);
+                    }
+                })());
+            }
+
             return c.json({ url: result.url });
         } catch (e: any) {
             console.error(e.message);
