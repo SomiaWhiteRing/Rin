@@ -209,8 +209,18 @@
     },
     "delete": {
       "confirm": "Delete image {{name}}?",
+      "disabled_external": "External images cannot be deleted.",
+      "disabled_favorite": "Favorite images cannot be deleted.",
+      "disabled_used": "Images referenced by articles cannot be deleted.",
       "title": "Delete Image"
     },
+    "compress_one": "Compress",
+    "copy": {
+      "failed": "Copy failed",
+      "success": "Link copied",
+      "title": "Copy Link"
+    },
+    "created_at": "Added: {{date}}",
     "details": {
       "filename": "Filename",
       "no_usages": "No articles currently reference this image.",
@@ -227,8 +237,21 @@
     "filter": {
       "all": "All images",
       "all_articles": "All articles",
+      "created_from": "Added from",
+      "created_to": "Added to",
       "unused": "Unused",
       "used": "Used"
+    },
+    "favorite": {
+      "add": "Favorite",
+      "no": "Not favorite",
+      "remove": "Unfavorite",
+      "yes": "Favorite"
+    },
+    "favorite_filter": {
+      "all": "All favorites",
+      "favorited": "Favorites",
+      "normal": "Not favorites"
     },
     "loading": "Loading image assets...",
     "search": "Search filename or URL",
@@ -239,6 +262,12 @@
       "external": "External",
       "storage": "Storage",
       "upload": "Upload"
+    },
+    "sort": {
+      "created_asc": "Oldest added",
+      "created_desc": "Newest added",
+      "size_asc": "Size ascending",
+      "size_desc": "Size descending"
     },
     "stats": {
       "compressible": "Compressible",

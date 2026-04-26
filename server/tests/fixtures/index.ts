@@ -128,6 +128,7 @@ export function createMockDB() {
             source TEXT DEFAULT 'article' NOT NULL,
             filename TEXT DEFAULT '' NOT NULL,
             note TEXT DEFAULT '' NOT NULL,
+            favorite INTEGER DEFAULT 0 NOT NULL,
             content_type TEXT DEFAULT '' NOT NULL,
             size INTEGER DEFAULT 0 NOT NULL,
             width INTEGER,

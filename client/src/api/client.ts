@@ -170,6 +170,7 @@ export interface ImageAsset {
   source: "upload" | "article" | "storage" | "external";
   filename: string;
   note: string;
+  favorite: number;
   contentType: string;
   size: number;
   width: number | null;
@@ -681,18 +682,26 @@ class ImagesAPI {
     limit?: number;
     keyword?: string;
     usage?: "all" | "used" | "unused";
+    favorite?: "all" | "favorited" | "normal";
     feedId?: number;
     contentType?: string;
     compressionStatus?: string;
+    createdFrom?: string;
+    createdTo?: string;
+    sort?: "created_desc" | "created_asc" | "size_desc" | "size_asc";
   }): Promise<ApiResponse<ImageListResponse>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
     if (params?.keyword) searchParams.set("keyword", params.keyword);
     if (params?.usage && params.usage !== "all") searchParams.set("usage", params.usage);
+    if (params?.favorite && params.favorite !== "all") searchParams.set("favorite", params.favorite);
     if (params?.feedId) searchParams.set("feedId", String(params.feedId));
     if (params?.contentType) searchParams.set("contentType", params.contentType);
     if (params?.compressionStatus) searchParams.set("compressionStatus", params.compressionStatus);
+    if (params?.createdFrom) searchParams.set("createdFrom", params.createdFrom);
+    if (params?.createdTo) searchParams.set("createdTo", params.createdTo);
+    if (params?.sort) searchParams.set("sort", params.sort);
     const query = searchParams.toString();
     return this.http.get<ImageListResponse>(`/api/images${query ? `?${query}` : ""}`);
   }
@@ -701,7 +710,7 @@ class ImagesAPI {
     return this.http.get<ImageStatsResponse>("/api/images/stats");
   }
 
-  async update(id: number, body: { filename?: string; note?: string }): Promise<ApiResponse<{ success: boolean }>> {
+  async update(id: number, body: { filename?: string; note?: string; favorite?: boolean }): Promise<ApiResponse<{ success: boolean }>> {
     return this.http.patch<{ success: boolean }>(`/api/images/${id}`, body);
   }
 

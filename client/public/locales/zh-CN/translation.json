@@ -209,8 +209,18 @@
     },
     "delete": {
       "confirm": "确定删除图片 {{name}} 吗？",
+      "disabled_external": "外链图片不可删除。",
+      "disabled_favorite": "收藏图片不可删除。",
+      "disabled_used": "已被文章引用的图片不可删除。",
       "title": "删除图片"
     },
+    "compress_one": "压缩图片",
+    "copy": {
+      "failed": "复制失败",
+      "success": "链接已复制",
+      "title": "复制链接"
+    },
+    "created_at": "入库时间：{{date}}",
     "details": {
       "filename": "文件名",
       "no_usages": "当前没有文章引用这张图片。",
@@ -227,8 +237,21 @@
     "filter": {
       "all": "全部图片",
       "all_articles": "全部文章",
+      "created_from": "入库开始时间",
+      "created_to": "入库结束时间",
       "unused": "未使用",
       "used": "已使用"
+    },
+    "favorite": {
+      "add": "收藏",
+      "no": "未收藏",
+      "remove": "取消收藏",
+      "yes": "已收藏"
+    },
+    "favorite_filter": {
+      "all": "全部收藏状态",
+      "favorited": "已收藏",
+      "normal": "未收藏"
     },
     "loading": "正在加载图片资产...",
     "search": "搜索文件名或 URL",
@@ -239,6 +262,12 @@
       "external": "外链",
       "storage": "存储",
       "upload": "上传"
+    },
+    "sort": {
+      "created_asc": "入库时间最早",
+      "created_desc": "入库时间最新",
+      "size_asc": "大小从小到大",
+      "size_desc": "大小从大到小"
     },
     "stats": {
       "compressible": "可压缩",

@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, like, notInArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, like, lte, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import type { AppContext, DB } from "../core/hono-types";
 import { imageAssets, imageUsages, feeds } from "../db/schema";
@@ -344,10 +344,14 @@ async function listImages(db: DB, params: URLSearchParams) {
   const feedId = Number(params.get("feedId") || 0);
   const contentType = params.get("contentType")?.trim();
   const compressionStatus = params.get("compressionStatus")?.trim();
+  const favorite = params.get("favorite") || "all";
+  const createdFrom = params.get("createdFrom")?.trim();
+  const createdTo = params.get("createdTo")?.trim();
+  const sort = params.get("sort") || "created_desc";
   const conditions = [];
 
   if (keyword) {
-    conditions.push(sql`(${imageAssets.filename} like ${`%${keyword}%`} or ${imageAssets.url} like ${`%${keyword}%`})`);
+    conditions.push(sql`(${imageAssets.filename} like ${`%${keyword}%`} or ${imageAssets.url} like ${`%${keyword}%`} or ${imageAssets.note} like ${`%${keyword}%`})`);
   }
   if (contentType) {
     conditions.push(like(imageAssets.contentType, `${contentType}%`));
@@ -355,34 +359,44 @@ async function listImages(db: DB, params: URLSearchParams) {
   if (compressionStatus) {
     conditions.push(eq(imageAssets.compressionStatus, compressionStatus));
   }
-  if (feedId > 0) {
-    const rows = await db.select({ assetId: imageUsages.assetId }).from(imageUsages).where(eq(imageUsages.feedId, feedId));
-    const ids = rows.map((row) => row.assetId);
-    if (ids.length === 0) {
-      return { size: 0, data: [], hasNext: false };
+  if (favorite === "favorited") {
+    conditions.push(eq(imageAssets.favorite, 1));
+  } else if (favorite === "normal") {
+    conditions.push(eq(imageAssets.favorite, 0));
+  }
+  if (createdFrom) {
+    const date = new Date(createdFrom);
+    if (!Number.isNaN(date.getTime())) {
+      conditions.push(gte(imageAssets.createdAt, date));
     }
-    conditions.push(inArray(imageAssets.id, ids));
+  }
+  if (createdTo) {
+    const date = new Date(createdTo);
+    if (!Number.isNaN(date.getTime())) {
+      conditions.push(lte(imageAssets.createdAt, date));
+    }
+  }
+  if (feedId > 0) {
+    conditions.push(sql`${imageAssets.id} in (select asset_id from image_usages where feed_id = ${feedId})`);
   }
   if (usage === "used") {
-    const rows = await db.select({ assetId: imageUsages.assetId }).from(imageUsages).groupBy(imageUsages.assetId);
-    const ids = rows.map((row) => row.assetId);
-    if (ids.length === 0) {
-      return { size: 0, data: [], hasNext: false };
-    }
-    conditions.push(inArray(imageAssets.id, ids));
+    conditions.push(sql`${imageAssets.id} in (select asset_id from image_usages)`);
   } else if (usage === "unused") {
-    const rows = await db.select({ assetId: imageUsages.assetId }).from(imageUsages).groupBy(imageUsages.assetId);
-    const ids = rows.map((row) => row.assetId);
-    if (ids.length > 0) {
-      conditions.push(notInArray(imageAssets.id, ids));
-    }
+    conditions.push(sql`${imageAssets.id} not in (select asset_id from image_usages)`);
   }
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const orderBy = sort === "created_asc"
+    ? [asc(imageAssets.createdAt)]
+    : sort === "size_desc"
+      ? [desc(imageAssets.size)]
+      : sort === "size_asc"
+        ? [asc(imageAssets.size)]
+        : [desc(imageAssets.createdAt)];
   const total = await db.select({ count: sql<number>`count(*)` }).from(imageAssets).where(where);
   const assets = await db.query.imageAssets.findMany({
     where,
-    orderBy: [desc(imageAssets.updatedAt)],
+    orderBy,
     offset: (page - 1) * limit,
     limit: limit + 1,
   });
@@ -438,6 +452,9 @@ async function deleteImageAsset(db: DB, env: Env, id: number) {
   const usages = await db.query.imageUsages.findMany({ where: eq(imageUsages.assetId, id), columns: { id: true } });
   if (usages.length > 0) {
     throw new Error("Image is used by articles");
+  }
+  if (asset.favorite === 1) {
+    throw new Error("Favorite image cannot be deleted");
   }
   if (!asset.storageKey) {
     throw new Error("External image cannot be deleted");
@@ -561,10 +578,11 @@ export function ImageService(): Hono {
     }
 
     const id = Number(c.req.param("id"));
-    const body = await c.req.json() as { filename?: string; note?: string };
+    const body = await c.req.json() as { filename?: string; note?: string; favorite?: boolean };
     await c.get("db").update(imageAssets).set({
       filename: body.filename,
       note: body.note,
+      favorite: body.favorite === undefined ? undefined : body.favorite ? 1 : 0,
       updatedAt: new Date(),
     }).where(eq(imageAssets.id, id));
     return c.json({ success: true });

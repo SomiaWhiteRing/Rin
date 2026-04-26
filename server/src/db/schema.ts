@@ -91,6 +91,7 @@ export const imageAssets = sqliteTable("image_assets", {
     source: text("source").default("article").notNull(),
     filename: text("filename").default("").notNull(),
     note: text("note").default("").notNull(),
+    favorite: integer("favorite").default(0).notNull(),
     contentType: text("content_type").default("").notNull(),
     size: integer("size").default(0).notNull(),
     width: integer("width"),

@@ -209,8 +209,18 @@
     },
     "delete": {
       "confirm": "確定刪除圖片 {{name}} 嗎？",
+      "disabled_external": "外連圖片不可刪除。",
+      "disabled_favorite": "收藏圖片不可刪除。",
+      "disabled_used": "已被文章引用的圖片不可刪除。",
       "title": "刪除圖片"
     },
+    "compress_one": "壓縮圖片",
+    "copy": {
+      "failed": "複製失敗",
+      "success": "連結已複製",
+      "title": "複製連結"
+    },
+    "created_at": "入庫時間：{{date}}",
     "details": {
       "filename": "檔案名稱",
       "no_usages": "目前沒有文章引用這張圖片。",
@@ -227,8 +237,21 @@
     "filter": {
       "all": "全部圖片",
       "all_articles": "全部文章",
+      "created_from": "入庫開始時間",
+      "created_to": "入庫結束時間",
       "unused": "未使用",
       "used": "已使用"
+    },
+    "favorite": {
+      "add": "收藏",
+      "no": "未收藏",
+      "remove": "取消收藏",
+      "yes": "已收藏"
+    },
+    "favorite_filter": {
+      "all": "全部收藏狀態",
+      "favorited": "已收藏",
+      "normal": "未收藏"
     },
     "loading": "正在載入圖片資產...",
     "search": "搜尋檔案名稱或 URL",
@@ -239,6 +262,12 @@
       "external": "外連",
       "storage": "儲存",
       "upload": "上傳"
+    },
+    "sort": {
+      "created_asc": "入庫時間最早",
+      "created_desc": "入庫時間最新",
+      "size_asc": "大小從小到大",
+      "size_desc": "大小從大到小"
     },
     "stats": {
       "compressible": "可壓縮",

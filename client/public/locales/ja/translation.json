@@ -209,8 +209,18 @@
     },
     "delete": {
       "confirm": "画像 {{name}} を削除しますか？",
+      "disabled_external": "外部画像は削除できません。",
+      "disabled_favorite": "お気に入り画像は削除できません。",
+      "disabled_used": "記事で参照されている画像は削除できません。",
       "title": "画像を削除"
     },
+    "compress_one": "圧縮",
+    "copy": {
+      "failed": "コピーに失敗しました",
+      "success": "リンクをコピーしました",
+      "title": "リンクをコピー"
+    },
+    "created_at": "追加日時: {{date}}",
     "details": {
       "filename": "ファイル名",
       "no_usages": "この画像を参照している記事はありません。",
@@ -227,8 +237,21 @@
     "filter": {
       "all": "すべての画像",
       "all_articles": "すべての記事",
+      "created_from": "追加日開始",
+      "created_to": "追加日終了",
       "unused": "未使用",
       "used": "使用中"
+    },
+    "favorite": {
+      "add": "お気に入り",
+      "no": "未お気に入り",
+      "remove": "解除",
+      "yes": "お気に入り"
+    },
+    "favorite_filter": {
+      "all": "すべてのお気に入り状態",
+      "favorited": "お気に入り",
+      "normal": "未お気に入り"
     },
     "loading": "画像アセットを読み込んでいます...",
     "search": "ファイル名または URL を検索",
@@ -239,6 +262,12 @@
       "external": "外部",
       "storage": "ストレージ",
       "upload": "アップロード"
+    },
+    "sort": {
+      "created_asc": "追加日時が古い順",
+      "created_desc": "追加日時が新しい順",
+      "size_asc": "サイズ昇順",
+      "size_desc": "サイズ降順"
     },
     "stats": {
       "compressible": "圧縮可能",

@@ -128,6 +128,99 @@ describe("ImageService", () => {
     expect(remaining.map((row) => row.id)).toEqual([10]);
   });
 
+  it("updates favorite state and protects favorite unused images from deletion", async () => {
+    sqlite.exec(`
+      INSERT INTO image_assets (id, url, storage_key, source, filename, content_type, size)
+      VALUES (10, 'https://images.example.com/images/free.png', 'images/free.png', 'storage', 'free.png', 'image/png', 25)
+    `);
+
+    const update = await context.app.request("/10", {
+      method: "PATCH",
+      headers: {
+        ...adminHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ favorite: true }),
+    }, context.env);
+    expect(update.status).toBe(200);
+
+    const deleteResponse = await context.app.request("/10", {
+      method: "DELETE",
+      headers: adminHeaders(),
+    }, context.env);
+    expect(deleteResponse.status).toBe(400);
+    expect(await deleteResponse.text()).toBe("Favorite image cannot be deleted");
+
+    const bulkResponse = await context.app.request("/bulk-delete", {
+      method: "POST",
+      headers: {
+        ...adminHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ids: [10] }),
+    }, context.env);
+    const payload = await bulkResponse.json() as any;
+    expect(payload.deleted).toBe(0);
+    expect(payload.skipped).toBe(1);
+    expect(payload.items[0].reason).toBe("Favorite image cannot be deleted");
+  });
+
+  it("filters by favorite and created date and sorts by size", async () => {
+    sqlite.exec(`
+      INSERT INTO image_assets (id, url, storage_key, source, filename, content_type, size, favorite, created_at)
+      VALUES
+        (10, 'https://images.example.com/images/small.png', 'images/small.png', 'storage', 'small.png', 'image/png', 25, 1, unixepoch('2025-01-01')),
+        (20, 'https://images.example.com/images/large.png', 'images/large.png', 'storage', 'large.png', 'image/png', 100, 1, unixepoch('2025-02-01')),
+        (30, 'https://images.example.com/images/normal.png', 'images/normal.png', 'storage', 'normal.png', 'image/png', 200, 0, unixepoch('2025-03-01'))
+    `);
+
+    const response = await context.app.request("/?favorite=favorited&createdFrom=2025-01-15T00:00:00.000Z&sort=size_desc", {
+      headers: adminHeaders(),
+    }, context.env);
+    const payload = await response.json() as any;
+
+    expect(payload.size).toBe(1);
+    expect(payload.data[0].id).toBe(20);
+    expect(payload.data[0].favorite).toBe(1);
+  });
+
+  it("filters unused images without expanding usage ids into SQL variables", async () => {
+    sqlite.exec(`
+      INSERT INTO users (id, username, openid, permission)
+      VALUES (2, 'writer', 'writer', 1)
+    `);
+
+    const insertAsset = sqlite.prepare(`
+      INSERT INTO image_assets (id, url, storage_key, source, filename, content_type, size)
+      VALUES (?, ?, ?, 'storage', ?, 'image/png', 1)
+    `);
+    const insertFeed = sqlite.prepare(`
+      INSERT INTO feeds (id, title, content, uid, draft, listed)
+      VALUES (?, ?, 'content', 2, 0, 1)
+    `);
+    const insertUsage = sqlite.prepare(`
+      INSERT INTO image_usages (asset_id, feed_id, raw_url)
+      VALUES (?, ?, ?)
+    `);
+
+    for (let index = 1; index <= 1100; index += 1) {
+      const url = `https://images.example.com/images/${index}.png`;
+      insertAsset.run(index, url, `images/${index}.png`, `${index}.png`);
+      insertFeed.run(index, `Post ${index}`);
+      insertUsage.run(index, index, url);
+    }
+    insertAsset.run(2000, "https://images.example.com/images/free.png", "images/free.png", "free.png");
+
+    const response = await context.app.request("/?usage=unused", {
+      headers: adminHeaders(),
+    }, context.env);
+    const payload = await response.json() as any;
+
+    expect(response.status).toBe(200);
+    expect(payload.size).toBe(1);
+    expect(payload.data[0].id).toBe(2000);
+  });
+
   it("queues only supported local images for TinyPNG compression", async () => {
     const sent: unknown[] = [];
     context.env.TASK_QUEUE = {
