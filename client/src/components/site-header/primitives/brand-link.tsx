@@ -29,9 +29,9 @@ export function BrandLink({
           className={avatarClassName || (compact ? "h-10 w-10 rounded-full border-2" : "h-12 w-12 rounded-2xl border-2")}
         />
       ) : null}
-      <div className={`${showAvatar ? (compact ? "mx-2" : "mx-4") : ""} flex flex-col justify-center items-start`}>
-        <p className={`${compact ? "text-sm font-bold t-primary" : "text-xl font-bold dark:text-white"} ${titleClassName}`}>{siteConfig.name}</p>
-        {showDescription ? <p className={`text-xs text-neutral-500 ${descriptionClassName}`}>{siteConfig.description}</p> : null}
+      <div className={`${showAvatar ? (compact ? "mx-2" : "mx-4") : ""} flex min-w-0 flex-col justify-center items-start`}>
+        <p className={`${compact ? "text-sm font-bold t-primary" : "text-xl font-bold dark:text-white"} max-w-full truncate ${titleClassName}`}>{siteConfig.name}</p>
+        {showDescription ? <p className={`max-w-full truncate text-xs text-neutral-500 ${descriptionClassName}`}>{siteConfig.description}</p> : null}
       </div>
     </Link>
   );

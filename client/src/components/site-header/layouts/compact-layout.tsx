@@ -16,7 +16,8 @@ export const compactLayoutDefinition: HeaderLayoutDefinition = {
             className="min-w-0 flex items-center"
             avatarClassName="h-10 w-10 rounded-full"
             titleClassName="text-base font-bold tracking-tight text-neutral-900 dark:text-neutral-50"
-            showDescription={false}
+            showDescription
+            descriptionClassName="max-w-[18rem]"
           />
           <div className="flex min-w-0 flex-1 items-center justify-end">
             <div className="flex min-w-0 flex-row items-center justify-end text-sm t-primary">
@@ -38,7 +39,7 @@ export const compactLayoutDefinition: HeaderLayoutDefinition = {
         profile={profile}
         siteConfig={siteConfig}
         isAtTop={isAtTop}
-        showDescription={false}
+        showDescription
         showInlineNav
         avatarClassName="h-8 w-8 rounded-lg"
       />
