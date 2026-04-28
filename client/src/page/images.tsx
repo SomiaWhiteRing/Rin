@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet";
 import { useTranslation } from "react-i18next";
 import ReactLoading from "react-loading";
 import Modal from "react-modal";
-import type { ImageAsset, ImageStatsResponse } from "../api/client";
+import type { ImageAsset, ImageListResponse, ImageStatsResponse } from "../api/client";
 import { client } from "../app/runtime";
 import { Button } from "../components/button";
 import { useAlert, useConfirm } from "../components/dialog";
@@ -14,6 +14,7 @@ type ImageViewMode = "list" | "grid";
 type ImageUsageFilter = "all" | "used" | "unused";
 type ImageFavoriteFilter = "all" | "favorited" | "normal";
 type ImageSort = "created_desc" | "created_asc" | "size_desc" | "size_asc";
+const IMAGES_PAGE_SIZE = 15;
 
 function formatBytes(value: number) {
   if (!value) return "0 B";
@@ -127,6 +128,8 @@ export function ImagesPage() {
   const [createdTo, setCreatedTo] = useState("");
   const [sort, setSort] = useState<ImageSort>("created_desc");
   const [viewMode, setViewMode] = useState<ImageViewMode>("list");
+  const [page, setPage] = useState(1);
+  const [listMeta, setListMeta] = useState<Pick<ImageListResponse, "size" | "hasNext">>({ size: 0, hasNext: false });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [feeds, setFeeds] = useState<Array<{ id: number; title: string | null }>>([]);
   const [acting, setActing] = useState(false);
@@ -142,13 +145,19 @@ export function ImagesPage() {
   const selectedDeletableCount = selectedAssets.filter(canDelete).length;
   const selectedCompressibleCount = selectedAssets.filter(canCompress).length;
   const selectedTotalSize = selectedAssets.reduce((total, asset) => total + asset.size, 0);
+  const resultStart = listMeta.size === 0 ? 0 : (page - 1) * IMAGES_PAGE_SIZE + 1;
+  const resultEnd = Math.min(page * IMAGES_PAGE_SIZE, listMeta.size);
+
+  const resetPage = () => {
+    setPage(1);
+  };
 
   const loadImages = () => {
     setLoading(true);
     client.images
       .list({
-        page: 1,
-        limit: 100,
+        page,
+        limit: IMAGES_PAGE_SIZE,
         usage,
         favorite,
         feedId: feedId || undefined,
@@ -162,6 +171,7 @@ export function ImagesPage() {
           return;
         }
         setItems(data?.data || []);
+        setListMeta({ size: data?.size || 0, hasNext: Boolean(data?.hasNext) });
         setSelectedIds([]);
       })
       .finally(() => setLoading(false));
@@ -173,7 +183,7 @@ export function ImagesPage() {
 
   useEffect(() => {
     loadImages();
-  }, [usage, favorite, feedId, createdFrom, createdTo, sort]);
+  }, [page, usage, favorite, feedId, createdFrom, createdTo, sort]);
 
   useEffect(() => {
     Promise.all([
@@ -340,6 +350,7 @@ export function ImagesPage() {
     setCreatedFrom("");
     setCreatedTo("");
     setSort("created_desc");
+    resetPage();
   };
 
   const deleteDisabledReason = (asset: ImageAsset) => {
@@ -461,7 +472,7 @@ export function ImagesPage() {
         <div>
           <div className="grid gap-3 sm:grid-cols-3">
             <FilterField label={t("images.filter.usage")}>
-              <select value={usage} onChange={(event) => setUsage(event.target.value as ImageUsageFilter)} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
+              <select value={usage} onChange={(event) => { resetPage(); setUsage(event.target.value as ImageUsageFilter); }} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
                 <option value="all">{t("images.filter.all")}</option>
                 <option value="used">{t("images.filter.used")}</option>
                 <option value="unused">{t("images.filter.unused")}</option>
@@ -469,7 +480,7 @@ export function ImagesPage() {
             </FilterField>
 
             <FilterField label={t("images.filter.favorite")}>
-              <select value={favorite} onChange={(event) => setFavorite(event.target.value as ImageFavoriteFilter)} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
+              <select value={favorite} onChange={(event) => { resetPage(); setFavorite(event.target.value as ImageFavoriteFilter); }} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
                 <option value="all">{t("images.favorite_filter.all")}</option>
                 <option value="favorited">{t("images.favorite_filter.favorited")}</option>
                 <option value="normal">{t("images.favorite_filter.normal")}</option>
@@ -477,7 +488,7 @@ export function ImagesPage() {
             </FilterField>
 
             <FilterField label={t("images.filter.article")}>
-              <select value={feedId} onChange={(event) => setFeedId(Number(event.target.value))} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
+              <select value={feedId} onChange={(event) => { resetPage(); setFeedId(Number(event.target.value)); }} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
                 <option value={0}>{t("images.filter.all_articles")}</option>
                 {feeds.map((feed) => (
                   <option key={feed.id} value={feed.id}>{feed.title || `#${feed.id}`}</option>
@@ -486,31 +497,31 @@ export function ImagesPage() {
             </FilterField>
           </div>
 
-          <div className="mt-4 grid gap-4 border-t border-black/5 pt-4 dark:border-white/5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+          <div className="mt-4 grid gap-4 border-t border-black/5 pt-4 dark:border-white/5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
             <div>
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-[minmax(0,12rem)_minmax(0,12rem)]">
+              <div className="grid max-w-[25rem] grid-cols-2 gap-3">
                 <FilterField label={t("images.filter.created_from")}>
-                  <input type="date" value={createdFrom} onChange={(event) => setCreatedFrom(event.target.value)} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10" />
+                  <input type="date" value={createdFrom} onChange={(event) => { resetPage(); setCreatedFrom(event.target.value); }} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10" />
                 </FilterField>
                 <FilterField label={t("images.filter.created_to")}>
-                  <input type="date" value={createdTo} onChange={(event) => setCreatedTo(event.target.value)} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10" />
+                  <input type="date" value={createdTo} onChange={(event) => { resetPage(); setCreatedTo(event.target.value); }} className="w-full rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10" />
                 </FilterField>
               </div>
               {hasActiveFilters ? (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium uppercase text-neutral-500 dark:text-neutral-400">{t("images.filter.active")}</span>
-                  {usage !== "all" ? <ActiveFilter onClear={() => setUsage("all")}>{t(`images.filter.${usage}`)}</ActiveFilter> : null}
-                  {favorite !== "all" ? <ActiveFilter onClear={() => setFavorite("all")}>{t(`images.favorite_filter.${favorite}`)}</ActiveFilter> : null}
-                  {feedId ? <ActiveFilter onClear={() => setFeedId(0)}>{feeds.find((feed) => feed.id === feedId)?.title || `#${feedId}`}</ActiveFilter> : null}
-                  {createdFrom ? <ActiveFilter onClear={() => setCreatedFrom("")}>{t("images.filter.from$value", { value: createdFrom })}</ActiveFilter> : null}
-                  {createdTo ? <ActiveFilter onClear={() => setCreatedTo("")}>{t("images.filter.to$value", { value: createdTo })}</ActiveFilter> : null}
+                  {usage !== "all" ? <ActiveFilter onClear={() => { resetPage(); setUsage("all"); }}>{t(`images.filter.${usage}`)}</ActiveFilter> : null}
+                  {favorite !== "all" ? <ActiveFilter onClear={() => { resetPage(); setFavorite("all"); }}>{t(`images.favorite_filter.${favorite}`)}</ActiveFilter> : null}
+                  {feedId ? <ActiveFilter onClear={() => { resetPage(); setFeedId(0); }}>{feeds.find((feed) => feed.id === feedId)?.title || `#${feedId}`}</ActiveFilter> : null}
+                  {createdFrom ? <ActiveFilter onClear={() => { resetPage(); setCreatedFrom(""); }}>{t("images.filter.from$value", { value: createdFrom })}</ActiveFilter> : null}
+                  {createdTo ? <ActiveFilter onClear={() => { resetPage(); setCreatedTo(""); }}>{t("images.filter.to$value", { value: createdTo })}</ActiveFilter> : null}
                   <button type="button" className="text-xs font-semibold text-theme" onClick={clearFilters}>{t("images.filter.clear")}</button>
                 </div>
               ) : null}
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <select value={sort} onChange={(event) => setSort(event.target.value as ImageSort)} className="rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
+            <div className="flex items-center gap-3">
+              <select value={sort} onChange={(event) => { resetPage(); setSort(event.target.value as ImageSort); }} className="w-40 rounded-lg border border-black/10 bg-w px-3 py-2 text-sm t-primary dark:border-white/10">
                 <option value="created_desc">{t("images.sort.created_desc")}</option>
                 <option value="created_asc">{t("images.sort.created_asc")}</option>
                 <option value="size_desc">{t("images.sort.size_desc")}</option>
@@ -548,19 +559,28 @@ export function ImagesPage() {
       {!loading && items.length > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold t-primary">{t("images.results.title$count", { count: items.length })}</p>
+            <p className="text-sm font-semibold t-primary">{t("images.results.title$count", { count: listMeta.size })}</p>
             <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              {t("images.pagination.range", { start: resultStart, end: resultEnd, total: listMeta.size })}
+              <span className="mx-1">·</span>
               {hasActiveFilters ? t("images.results.filtered") : t("images.results.all")}
             </p>
           </div>
-          <label className="inline-flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
-            <input
-              type="checkbox"
-              checked={items.length > 0 && selectedIds.length === items.length}
-              onChange={(event) => setSelectedIds(event.target.checked ? items.map((asset) => asset.id) : [])}
-            />
-            {t("images.selection.all")}
-          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="inline-flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+              <input
+                type="checkbox"
+                checked={items.length > 0 && selectedIds.length === items.length}
+                onChange={(event) => setSelectedIds(event.target.checked ? items.map((asset) => asset.id) : [])}
+              />
+              {t("images.selection.all")}
+            </label>
+            <div className="flex items-center gap-2">
+              <Button secondary title={t("images.pagination.prev")} disabled={loading || page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} />
+              <span className="min-w-16 text-center text-sm text-neutral-500 dark:text-neutral-400">{t("images.pagination.page$current", { current: page })}</span>
+              <Button secondary title={t("images.pagination.next")} disabled={loading || !listMeta.hasNext} onClick={() => setPage((current) => current + 1)} />
+            </div>
+          </div>
         </div>
       ) : null}
 
@@ -674,6 +694,14 @@ export function ImagesPage() {
               </div>
             </div>
           ))}
+        </div>
+      ) : null}
+
+      {!loading && items.length > 0 ? (
+        <div className="flex items-center justify-end gap-2">
+          <Button secondary title={t("images.pagination.prev")} disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} />
+          <span className="min-w-16 text-center text-sm text-neutral-500 dark:text-neutral-400">{t("images.pagination.page$current", { current: page })}</span>
+          <Button secondary title={t("images.pagination.next")} disabled={!listMeta.hasNext} onClick={() => setPage((current) => current + 1)} />
         </div>
       ) : null}
     </div>

@@ -268,6 +268,12 @@
       "clear": "取消選取",
       "summary": "已選 {{size}}，{{deletable}} 張可刪除，{{compressible}} 張可壓縮"
     },
+    "pagination": {
+      "next": "下一頁",
+      "page$current": "第 {{current}} 頁",
+      "prev": "上一頁",
+      "range": "第 {{start}}-{{end}} 張，共 {{total}} 張"
+    },
     "selected$count_one": "已選取 {{count}} 張",
     "selected$count_other": "已選取 {{count}} 張",
     "source": {
